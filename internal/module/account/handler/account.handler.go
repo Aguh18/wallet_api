@@ -4,18 +4,18 @@ import (
 	"wallet_api/internal/common/response"
 	"wallet_api/internal/module/account/dto/request"
 	resp "wallet_api/internal/module/account/dto/response"
-	"wallet_api/internal/module/account/usecase"
+	accountusecase "wallet_api/internal/module/account/usecase"
 	"wallet_api/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/gofiber/fiber/v2"
 )
 
 type Handler struct {
-	uc  usecase.UseCase
+	uc  accountusecase.UseCase
 	log logger.Interface
 }
 
-func New(uc usecase.UseCase, log logger.Interface) *Handler {
+func New(uc accountusecase.UseCase, log logger.Interface) *Handler {
 	return &Handler{
 		uc:  uc,
 		log: log,
@@ -114,7 +114,6 @@ func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 		return c.Status(400).JSON(response.Error(400, "Invalid account ID"))
 	}
 
-	// Get pagination params from query
 	limit := 10
 	offset := 0
 

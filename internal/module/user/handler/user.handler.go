@@ -7,7 +7,7 @@ import (
 	"wallet_api/internal/entity"
 	"wallet_api/internal/module/user/dto/request"
 	resp "wallet_api/internal/module/user/dto/response"
-	"wallet_api/internal/module/user/usecase"
+	userusecase "wallet_api/internal/module/user/usecase"
 	"wallet_api/internal/utils"
 	"wallet_api/pkg/logger"
 
@@ -16,12 +16,12 @@ import (
 )
 
 type Handler struct {
-	uc         usecase.UseCase
+	uc         userusecase.UseCase
 	log        logger.Interface
 	jwtManager *utils.JWTManager
 }
 
-func New(uc usecase.UseCase, log logger.Interface) *Handler {
+func New(uc userusecase.UseCase, log logger.Interface) *Handler {
 	return &Handler{
 		uc:         uc,
 		log:        log,

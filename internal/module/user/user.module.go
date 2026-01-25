@@ -3,20 +3,20 @@ package user
 import (
 	"wallet_api/internal/module/user/handler"
 	"wallet_api/internal/module/user/repository"
-	"wallet_api/internal/module/user/usecase"
+	userusecase "wallet_api/internal/module/user/usecase"
 	"wallet_api/pkg/logger"
 	"gorm.io/gorm"
 )
 
 type Module struct {
-	UseCase usecase.UseCase
+	UseCase userusecase.UseCase
 	Handler *handler.Handler
 }
 
 func NewModule(db *gorm.DB, log logger.Interface) *Module {
 	repo := repository.New(db)
 
-	uc := usecase.New(repo)
+	uc := userusecase.New(repo)
 
 	h := handler.New(uc, log)
 

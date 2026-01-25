@@ -6,23 +6,31 @@ import (
 
 	"wallet_api/internal/common/errors"
 	"wallet_api/internal/entity"
-	"wallet_api/internal/module/user/repository"
 	"wallet_api/internal/utils"
+
 	"github.com/google/uuid"
 )
 
 type UseCase struct {
-	repo repository.Repository
+	repo interface {
+		Create(ctx context.Context, user *entity.User) error
+		FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
+		FindByUsername(ctx context.Context, username string) (*entity.User, error)
+		Update(ctx context.Context, user *entity.User) error
+	}
 }
 
-// New creates new user usecase
-func New(repo repository.Repository) *UseCase {
+func New(repo interface {
+	Create(ctx context.Context, user *entity.User) error
+	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
+	FindByUsername(ctx context.Context, username string) (*entity.User, error)
+	Update(ctx context.Context, user *entity.User) error
+}) *UseCase {
 	return &UseCase{
 		repo: repo,
 	}
 }
 
-// Register creates new user
 func (uc *UseCase) Register(ctx context.Context, user *entity.User) error {
 	// Check if username exists
 	existing, err := uc.repo.FindByUsername(ctx, user.Username)
@@ -48,7 +56,6 @@ func (uc *UseCase) Register(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-// Login authenticates user
 func (uc *UseCase) Login(ctx context.Context, username, password string) (*entity.User, error) {
 	user, err := uc.repo.FindByUsername(ctx, username)
 	if err != nil {
@@ -66,7 +73,6 @@ func (uc *UseCase) Login(ctx context.Context, username, password string) (*entit
 	return user, nil
 }
 
-// GetProfile retrieves user by ID
 func (uc *UseCase) GetProfile(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
 	user, err := uc.repo.FindByID(ctx, userID)
 	if err != nil {
@@ -79,7 +85,6 @@ func (uc *UseCase) GetProfile(ctx context.Context, userID uuid.UUID) (*entity.Us
 	return user, nil
 }
 
-// UpdateProfile updates user profile
 func (uc *UseCase) UpdateProfile(ctx context.Context, user *entity.User) error {
 	// Check if user exists
 	existing, err := uc.repo.FindByID(ctx, user.ID)

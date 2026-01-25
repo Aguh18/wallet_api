@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"time"
 	"wallet_api/internal/common/response"
+	"wallet_api/internal/entity"
+	"wallet_api/internal/module/account/dto/request"
+	resp "wallet_api/internal/module/account/dto/response"
 	"wallet_api/internal/module/account/usecase"
 	"wallet_api/pkg/logger"
 	"github.com/google/uuid"
@@ -13,7 +17,6 @@ type Handler struct {
 	log logger.Interface
 }
 
-// New creates new account handler
 func New(uc *usecase.UseCase, log logger.Interface) *Handler {
 	return &Handler{
 		uc:  uc,
@@ -21,21 +24,37 @@ func New(uc *usecase.UseCase, log logger.Interface) *Handler {
 	}
 }
 
-type CreateAccountRequest struct {
-	AccountName string `json:"account_name" validate:"required"`
-	Currency    string `json:"currency" validate:"required,default=IDR"`
+func (h *Handler) toAccountResponse(account *entity.Account) resp.AccountResponse {
+	return resp.AccountResponse{
+		ID:          account.ID.String(),
+		UserID:      account.UserID.String(),
+		AccountName: account.AccountName,
+		Currency:    account.Currency,
+		Balance:     account.Balance,
+		Status:      account.Status,
+		CreatedAt:   account.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   account.UpdatedAt.Format(time.RFC3339),
+	}
 }
 
-type TransactionRequest struct {
-	Amount      int64  `json:"amount" validate:"required,gt=0"`
-	Description string `json:"description"`
+func (h *Handler) toTransactionResponse(transaction *entity.Transaction) resp.TransactionResponse {
+	return resp.TransactionResponse{
+		ID:            transaction.ID.String(),
+		AccountID:     transaction.AccountID.String(),
+		ReferenceID:   transaction.ReferenceID,
+		Type:          transaction.Type,
+		Amount:        transaction.Amount,
+		BalanceBefore: transaction.BalanceBefore,
+		BalanceAfter:  transaction.BalanceAfter,
+		Description:   transaction.Description,
+		CreatedAt:     transaction.CreatedAt.Format(time.RFC3339),
+	}
 }
 
-// CreateAccount handles create account
 func (h *Handler) CreateAccount(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
 
-	req := new(CreateAccountRequest)
+	req := new(request.CreateAccountRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
@@ -46,10 +65,9 @@ func (h *Handler) CreateAccount(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to create account"))
 	}
 
-	return c.JSON(response.Success(account, "Account created successfully"))
+	return c.JSON(response.Success(h.toAccountResponse(account), "Account created successfully"))
 }
 
-// GetAccount handles get account by ID
 func (h *Handler) GetAccount(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	accountID, err := uuid.Parse(idParam)
@@ -63,10 +81,9 @@ func (h *Handler) GetAccount(c *fiber.Ctx) error {
 		return c.Status(404).JSON(response.Error(404, "Account not found"))
 	}
 
-	return c.JSON(response.Success(account, "Account retrieved"))
+	return c.JSON(response.Success(h.toAccountResponse(account), "Account retrieved"))
 }
 
-// GetUserAccounts handles get all user accounts
 func (h *Handler) GetUserAccounts(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
 
@@ -76,10 +93,14 @@ func (h *Handler) GetUserAccounts(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to get accounts"))
 	}
 
-	return c.JSON(response.Success(accounts, "Accounts retrieved"))
+	responses := make([]resp.AccountResponse, len(accounts))
+	for i, account := range accounts {
+		responses[i] = h.toAccountResponse(account)
+	}
+
+	return c.JSON(response.Success(responses, "Accounts retrieved"))
 }
 
-// Deposit handles deposit to account
 func (h *Handler) Deposit(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	accountID, err := uuid.Parse(idParam)
@@ -87,7 +108,7 @@ func (h *Handler) Deposit(c *fiber.Ctx) error {
 		return c.Status(400).JSON(response.Error(400, "Invalid account ID"))
 	}
 
-	req := new(TransactionRequest)
+	req := new(request.TransactionRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
@@ -100,7 +121,6 @@ func (h *Handler) Deposit(c *fiber.Ctx) error {
 	return c.JSON(response.Success(nil, "Deposit successful"))
 }
 
-// Withdraw handles withdraw from account
 func (h *Handler) Withdraw(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	accountID, err := uuid.Parse(idParam)
@@ -108,7 +128,7 @@ func (h *Handler) Withdraw(c *fiber.Ctx) error {
 		return c.Status(400).JSON(response.Error(400, "Invalid account ID"))
 	}
 
-	req := new(TransactionRequest)
+	req := new(request.TransactionRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
@@ -121,7 +141,6 @@ func (h *Handler) Withdraw(c *fiber.Ctx) error {
 	return c.JSON(response.Success(nil, "Withdrawal successful"))
 }
 
-// GetTransactions handles get transaction history
 func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	accountID, err := uuid.Parse(idParam)
@@ -146,5 +165,10 @@ func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to get transactions"))
 	}
 
-	return c.JSON(response.Success(transactions, "Transactions retrieved"))
+	responses := make([]resp.TransactionResponse, len(transactions))
+	for i, transaction := range transactions {
+		responses[i] = h.toTransactionResponse(transaction)
+	}
+
+	return c.JSON(response.Success(responses, "Transactions retrieved"))
 }

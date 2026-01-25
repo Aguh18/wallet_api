@@ -5,7 +5,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Recovery recovers from panics
 func Recovery(l logger.Interface) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		defer func() {

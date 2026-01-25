@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Session represents session entity
 type Session struct {
 	ID           uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	UserID       uuid.UUID      `json:"user_id" gorm:"type:uuid;not null;index"`
@@ -19,7 +18,6 @@ type Session struct {
 	CreatedAt    time.Time      `json:"created_at"`
 }
 
-// TableName specifies the table name for Session
 func (Session) TableName() string {
 	return "sessions"
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// AccessToken represents access token entity
 type AccessToken struct {
 	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	SessionID uuid.UUID      `json:"session_id" gorm:"type:uuid;not null;index"`
@@ -18,7 +17,6 @@ type AccessToken struct {
 	CreatedAt time.Time      `json:"created_at"`
 }
 
-// TableName specifies the table name for AccessToken
 func (AccessToken) TableName() string {
 	return "access_tokens"
 }

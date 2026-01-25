@@ -1,44 +1,44 @@
 package handler
 
 import (
+	"time"
+	"wallet_api/internal/common/errors"
 	"wallet_api/internal/common/response"
 	"wallet_api/internal/entity"
+	"wallet_api/internal/module/user/dto/request"
+	resp "wallet_api/internal/module/user/dto/response"
 	"wallet_api/internal/module/user/usecase"
+	"wallet_api/internal/utils"
 	"wallet_api/pkg/logger"
-	"github.com/google/uuid"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
-	uc  *usecase.UseCase
-	log logger.Interface
+	uc         *usecase.UseCase
+	log        logger.Interface
+	jwtManager *utils.JWTManager
 }
 
-// New creates new user handler
 func New(uc *usecase.UseCase, log logger.Interface) *Handler {
 	return &Handler{
-		uc:  uc,
-		log: log,
+		uc:         uc,
+		log:        log,
+		jwtManager: utils.NewJWTManager(utils.GetSecretKey()),
 	}
 }
 
-type RegisterRequest struct {
-	Username string `json:"username" validate:"required,min=3,max=50"`
-	Password string `json:"password" validate:"required,min=6"`
+func (h *Handler) toUserResponse(user *entity.User) resp.UserResponse {
+	return resp.UserResponse{
+		ID:        user.ID.String(),
+		Username:  user.Username,
+		CreatedAt: user.CreatedAt.Format(time.RFC3339),
+	}
 }
 
-type LoginRequest struct {
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
-}
-
-type UpdateProfileRequest struct {
-	Username string `json:"username" validate:"required,min=3,max=50"`
-}
-
-// Register handles user registration
 func (h *Handler) Register(c *fiber.Ctx) error {
-	req := new(RegisterRequest)
+	req := new(request.RegisterRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
@@ -50,17 +50,30 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 
 	if err := h.uc.Register(c.Context(), user); err != nil {
 		h.log.Error("failed to register user: %v", err)
+
+		// Check if it's a conflict error (user already exists)
+		if appErr, ok := err.(*errors.AppError); ok {
+			return c.Status(appErr.Code).JSON(response.Error(appErr.Code, appErr.Message))
+		}
+
 		return c.Status(500).JSON(response.Error(500, "Failed to register user"))
 	}
 
-	user.PasswordHash = ""
+	// Generate JWT tokens
+	tokenPair, err := h.jwtManager.GenerateToken(user.ID, user.Username)
+	if err != nil {
+		h.log.Error("failed to generate tokens: %v", err)
+		return c.Status(500).JSON(response.Error(500, "Failed to generate tokens"))
+	}
 
-	return c.JSON(response.Success(user, "User registered successfully"))
+	// Set auth cookies
+	utils.SetAuthCookies(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second)
+
+	return c.JSON(response.Success(h.toUserResponse(user), "User registered successfully"))
 }
 
-// Login handles user login
 func (h *Handler) Login(c *fiber.Ctx) error {
-	req := new(LoginRequest)
+	req := new(request.LoginRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
@@ -71,12 +84,19 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		return c.Status(401).JSON(response.Error(401, "Invalid credentials"))
 	}
 
-	user.PasswordHash = ""
+	// Generate JWT tokens
+	tokenPair, err := h.jwtManager.GenerateToken(user.ID, user.Username)
+	if err != nil {
+		h.log.Error("failed to generate tokens: %v", err)
+		return c.Status(500).JSON(response.Error(500, "Failed to generate tokens"))
+	}
 
-	return c.JSON(response.Success(user, "Login successful"))
+	// Set auth cookies
+	utils.SetAuthCookies(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second)
+
+	return c.JSON(response.Success(h.toUserResponse(user), "Login successful"))
 }
 
-// GetProfile handles get user profile
 func (h *Handler) GetProfile(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
 
@@ -86,14 +106,13 @@ func (h *Handler) GetProfile(c *fiber.Ctx) error {
 		return c.Status(404).JSON(response.Error(404, "User not found"))
 	}
 
-	return c.JSON(response.Success(user, "Profile retrieved"))
+	return c.JSON(response.Success(h.toUserResponse(user), "Profile retrieved"))
 }
 
-// UpdateProfile handles update user profile
 func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
 
-	req := new(UpdateProfileRequest)
+	req := new(request.UpdateProfileRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
@@ -110,5 +129,39 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to update profile"))
 	}
 
-	return c.JSON(response.Success(user, "Profile updated"))
+	return c.JSON(response.Success(h.toUserResponse(user), "Profile updated"))
+}
+
+func (h *Handler) Logout(c *fiber.Ctx) error {
+	// Clear auth cookies
+	utils.ClearAuthCookies(c)
+
+	return c.JSON(response.Success(nil, "Logout successful"))
+}
+
+func (h *Handler) RefreshToken(c *fiber.Ctx) error {
+	// Get refresh token from cookie
+	refreshToken := utils.GetRefreshTokenFromCookie(c)
+	if refreshToken == "" {
+		return c.Status(401).JSON(response.Error(401, "Refresh token not found"))
+	}
+
+	// Validate refresh token
+	claims, err := h.jwtManager.ValidateToken(refreshToken)
+	if err != nil {
+		h.log.Error("failed to validate refresh token: %v", err)
+		return c.Status(401).JSON(response.Error(401, "Invalid refresh token"))
+	}
+
+	// Generate new token pair
+	tokenPair, err := h.jwtManager.GenerateToken(claims.UserID, claims.Username)
+	if err != nil {
+		h.log.Error("failed to generate new tokens: %v", err)
+		return c.Status(500).JSON(response.Error(500, "Failed to generate tokens"))
+	}
+
+	// Set new auth cookies
+	utils.SetAuthCookies(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second)
+
+	return c.JSON(response.Success(nil, "Token refreshed successfully"))
 }

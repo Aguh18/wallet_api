@@ -7,7 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Logger logs HTTP requests
 func Logger(l logger.Interface) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()

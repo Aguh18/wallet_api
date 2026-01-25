@@ -24,7 +24,8 @@
       "Bash(docker compose:*)",
       "Bash(curl:*)",
       "Bash(docker:*)",
-      "Bash(docker volume inspect:*)"
+      "Bash(docker volume inspect:*)",
+      "Bash(/tmp/go_files.txt)"
     ],
     "deny": [],
     "ask": []

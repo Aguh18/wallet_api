@@ -30,8 +30,8 @@ dev: ### run application with hot reload using air
 .PHONY: dev
 
 ##@ Docker
-compose-up: ### Run docker compose (database only) in foreground
-	$(BASE_STACK) up --build db
+compose-up: ### Run docker compose (database only) in background
+	$(BASE_STACK) up --build -d db
 .PHONY: compose-up
 
 compose-up-all: ### Run docker compose (database + app)

@@ -4,25 +4,44 @@ import (
 	"context"
 	"fmt"
 
-	"wallet_api/internal/common/errors"
 	"wallet_api/internal/common/consts"
+	"wallet_api/internal/common/errors"
 	"wallet_api/internal/entity"
-	"wallet_api/internal/module/account/repository"
+
 	"github.com/google/uuid"
 )
 
 type UseCase struct {
-	repo repository.Repository
-}
-
-// New creates new account usecase
-func New(repo repository.Repository) *UseCase {
-	return &UseCase{
-		repo: repo,
+	accountRepo interface {
+		Create(ctx context.Context, account *entity.Account) error
+		FindByID(ctx context.Context, id uuid.UUID) (*entity.Account, error)
+		FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error)
+		Update(ctx context.Context, account *entity.Account) error
+	}
+	transactionRepo interface {
+		Create(ctx context.Context, transaction *entity.Transaction) error
+		FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
 	}
 }
 
-// CreateAccount creates new account for user
+func New(
+	accountRepo interface {
+		Create(ctx context.Context, account *entity.Account) error
+		FindByID(ctx context.Context, id uuid.UUID) (*entity.Account, error)
+		FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error)
+		Update(ctx context.Context, account *entity.Account) error
+	},
+	transactionRepo interface {
+		Create(ctx context.Context, transaction *entity.Transaction) error
+		FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
+	},
+) *UseCase {
+	return &UseCase{
+		accountRepo:     accountRepo,
+		transactionRepo: transactionRepo,
+	}
+}
+
 func (uc *UseCase) CreateAccount(ctx context.Context, userID uuid.UUID, accountName, currency string) (*entity.Account, error) {
 	account := &entity.Account{
 		UserID:      userID,
@@ -32,16 +51,15 @@ func (uc *UseCase) CreateAccount(ctx context.Context, userID uuid.UUID, accountN
 		Status:      consts.AccountStatusActive,
 	}
 
-	if err := uc.repo.CreateAccount(ctx, account); err != nil {
+	if err := uc.accountRepo.Create(ctx, account); err != nil {
 		return nil, fmt.Errorf("failed to create account: %w", err)
 	}
 
 	return account, nil
 }
 
-// GetAccount retrieves account by ID
 func (uc *UseCase) GetAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error) {
-	account, err := uc.repo.FindByID(ctx, accountID)
+	account, err := uc.accountRepo.FindByID(ctx, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get account: %w", err)
 	}
@@ -52,9 +70,8 @@ func (uc *UseCase) GetAccount(ctx context.Context, accountID uuid.UUID) (*entity
 	return account, nil
 }
 
-// GetUserAccounts retrieves all accounts for user
-func (uc *UseCase) GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]entity.Account, error) {
-	accounts, err := uc.repo.FindByUserID(ctx, userID)
+func (uc *UseCase) GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error) {
+	accounts, err := uc.accountRepo.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user accounts: %w", err)
 	}
@@ -62,14 +79,13 @@ func (uc *UseCase) GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]ent
 	return accounts, nil
 }
 
-// Deposit adds money to account
 func (uc *UseCase) Deposit(ctx context.Context, accountID uuid.UUID, amount int64, description string) error {
 	if amount <= 0 {
 		return errors.ErrBadRequest
 	}
 
 	// Get account
-	account, err := uc.repo.FindByID(ctx, accountID)
+	account, err := uc.accountRepo.FindByID(ctx, accountID)
 	if err != nil {
 		return fmt.Errorf("failed to get account: %w", err)
 	}
@@ -79,7 +95,7 @@ func (uc *UseCase) Deposit(ctx context.Context, accountID uuid.UUID, amount int6
 
 	// Update balance
 	account.Balance += amount
-	if err := uc.repo.UpdateAccount(ctx, account); err != nil {
+	if err := uc.accountRepo.Update(ctx, account); err != nil {
 		return fmt.Errorf("failed to update account: %w", err)
 	}
 
@@ -94,21 +110,20 @@ func (uc *UseCase) Deposit(ctx context.Context, accountID uuid.UUID, amount int6
 		Description:   description,
 	}
 
-	if err := uc.repo.CreateTransaction(ctx, transaction); err != nil {
+	if err := uc.transactionRepo.Create(ctx, transaction); err != nil {
 		return fmt.Errorf("failed to create transaction: %w", err)
 	}
 
 	return nil
 }
 
-// Withdraw removes money from account
 func (uc *UseCase) Withdraw(ctx context.Context, accountID uuid.UUID, amount int64, description string) error {
 	if amount <= 0 {
 		return errors.ErrBadRequest
 	}
 
 	// Get account
-	account, err := uc.repo.FindByID(ctx, accountID)
+	account, err := uc.accountRepo.FindByID(ctx, accountID)
 	if err != nil {
 		return fmt.Errorf("failed to get account: %w", err)
 	}
@@ -123,7 +138,7 @@ func (uc *UseCase) Withdraw(ctx context.Context, accountID uuid.UUID, amount int
 
 	// Update balance
 	account.Balance -= amount
-	if err := uc.repo.UpdateAccount(ctx, account); err != nil {
+	if err := uc.accountRepo.Update(ctx, account); err != nil {
 		return fmt.Errorf("failed to update account: %w", err)
 	}
 
@@ -138,16 +153,15 @@ func (uc *UseCase) Withdraw(ctx context.Context, accountID uuid.UUID, amount int
 		Description:   description,
 	}
 
-	if err := uc.repo.CreateTransaction(ctx, transaction); err != nil {
+	if err := uc.transactionRepo.Create(ctx, transaction); err != nil {
 		return fmt.Errorf("failed to create transaction: %w", err)
 	}
 
 	return nil
 }
 
-// GetTransactions retrieves transaction history for account
-func (uc *UseCase) GetTransactions(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]entity.Transaction, error) {
-	transactions, err := uc.repo.FindByAccountID(ctx, accountID, limit, offset)
+func (uc *UseCase) GetTransactions(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
+	transactions, err := uc.transactionRepo.FindByAccountID(ctx, accountID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transactions: %w", err)
 	}

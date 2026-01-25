@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Transaction represents transaction entity
 type Transaction struct {
 	ID            uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	AccountID     uuid.UUID      `json:"account_id" gorm:"type:uuid;not null;index"`
@@ -20,7 +19,6 @@ type Transaction struct {
 	CreatedAt     time.Time      `json:"created_at" gorm:"index"`
 }
 
-// TableName specifies the table name for Transaction
 func (Transaction) TableName() string {
 	return "transactions"
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Account represents account entity
 type Account struct {
 	ID          uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	UserID      uuid.UUID      `json:"user_id" gorm:"type:uuid;not null;index"`
@@ -19,7 +18,6 @@ type Account struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
-// TableName specifies the table name for Account
 func (Account) TableName() string {
 	return "accounts"
 }

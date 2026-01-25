@@ -132,3 +132,28 @@ func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 
 	return c.JSON(response.Success(resp.ToTransactionDtos(transactions), "Transactions retrieved"))
 }
+
+func (h *Handler) Transfer(c *fiber.Ctx) error {
+	fromAccountIDParam := c.Params("id")
+	fromAccountID, err := uuid.Parse(fromAccountIDParam)
+	if err != nil {
+		return c.Status(400).JSON(response.Error(400, "Invalid from account ID"))
+	}
+
+	req := new(request.TransferRequest)
+	if err := c.BodyParser(req); err != nil {
+		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
+	}
+
+	toAccountID, err := uuid.Parse(req.ToAccountID)
+	if err != nil {
+		return c.Status(400).JSON(response.Error(400, "Invalid to account ID"))
+	}
+
+	if err := h.uc.Transfer(c.Context(), fromAccountID, toAccountID, req.Amount, req.Description); err != nil {
+		h.log.Error("failed to transfer: %v", err)
+		return c.Status(400).JSON(response.Error(400, err.Error()))
+	}
+
+	return c.JSON(response.Success(nil, "Transfer successful"))
+}

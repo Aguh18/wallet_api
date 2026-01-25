@@ -11,10 +11,8 @@ import (
 )
 
 type AccountRepository interface {
-	Create(ctx context.Context, account *entity.Account) error
-	FindByID(ctx context.Context, id uuid.UUID) (*entity.Account, error)
+	base.Repository[entity.Account]
 	FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error)
-	Update(ctx context.Context, account *entity.Account) error
 }
 
 type accountRepository struct {

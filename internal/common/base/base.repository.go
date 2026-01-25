@@ -13,6 +13,7 @@ type Repository[T any] interface {
 	Create(ctx context.Context, entity *T) error
 	CreateBatch(ctx context.Context, entities []*T) error
 	FindByID(ctx context.Context, id uuid.UUID) (*T, error)
+	FindByIDForUpdate(ctx context.Context, id uuid.UUID) (*T, error)
 	FindOne(ctx context.Context, conditions map[string]interface{}) (*T, error)
 	FindAll(ctx context.Context, limit, offset int) ([]*T, error)
 	Find(ctx context.Context, conditions map[string]interface{}, limit, offset int) ([]*T, error)
@@ -25,6 +26,7 @@ type Repository[T any] interface {
 	Exists(ctx context.Context, id uuid.UUID) (bool, error)
 	ExistsWhere(ctx context.Context, conditions map[string]interface{}) (bool, error)
 	WithTx(tx *gorm.DB) Repository[T]
+	WithTransaction(ctx context.Context, fn func(tx *gorm.DB) error) error
 }
 
 
@@ -50,6 +52,18 @@ func (r *BaseRepository[T]) CreateBatch(ctx context.Context, entities []*T) erro
 func (r *BaseRepository[T]) FindByID(ctx context.Context, id uuid.UUID) (*T, error) {
 	var entity T
 	err := r.db.WithContext(ctx).First(&entity, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
+func (r *BaseRepository[T]) FindByIDForUpdate(ctx context.Context, id uuid.UUID) (*T, error) {
+	var entity T
+	err := r.db.WithContext(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		First(&entity, "id = ?", id).
+		Error
 	if err != nil {
 		return nil, err
 	}

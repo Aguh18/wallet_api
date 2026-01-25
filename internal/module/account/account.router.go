@@ -15,6 +15,7 @@ func (m *Module) RegisterRoutes(app *fiber.App) {
 		accounts.Get("/:id", m.Handler.GetAccount)
 		accounts.Post("/:id/deposit", m.Handler.Deposit)
 		accounts.Post("/:id/withdraw", m.Handler.Withdraw)
+		accounts.Post("/:id/transfer", m.Handler.Transfer)
 		accounts.Get("/:id/transactions", m.Handler.GetTransactions)
 	}
 }

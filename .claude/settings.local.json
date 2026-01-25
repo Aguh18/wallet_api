@@ -27,7 +27,9 @@
       "Bash(docker volume inspect:*)",
       "Bash(/tmp/go_files.txt)",
       "Bash(go test:*)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(docker-compose ps:*)"
     ],
     "deny": [],
     "ask": []

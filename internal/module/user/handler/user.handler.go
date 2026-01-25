@@ -58,8 +58,9 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to generate tokens"))
 	}
 
-	// Set auth cookies
-	utils.SetAuthCookies(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second)
+	// Set auth cookies (use development mode for HTTP testing)
+	isProduction := c.Protocol() == "https"
+	utils.SetAuthCookiesSmart(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second, isProduction)
 
 	return c.JSON(response.Success(resp.ToUserDto(user), "User registered successfully"))
 }
@@ -83,8 +84,9 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to generate tokens"))
 	}
 
-	// Set auth cookies
-	utils.SetAuthCookies(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second)
+	// Set auth cookies (use development mode for HTTP testing)
+	isProduction := c.Protocol() == "https"
+	utils.SetAuthCookiesSmart(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second, isProduction)
 
 	return c.JSON(response.Success(resp.ToUserDto(user), "Login successful"))
 }
@@ -152,8 +154,9 @@ func (h *Handler) RefreshToken(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to generate tokens"))
 	}
 
-	// Set new auth cookies
-	utils.SetAuthCookies(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second)
+	// Set new auth cookies (use development mode for HTTP testing)
+	isProduction := c.Protocol() == "https"
+	utils.SetAuthCookiesSmart(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second, isProduction)
 
 	return c.JSON(response.Success(nil, "Token refreshed successfully"))
 }

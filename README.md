@@ -148,14 +148,14 @@ Don't want to code? Test all endpoints immediately!
 **Using Docker Compose (Recommended)**
 
 ```bash
-make compose-up
+make compose-up-all
 # App available at http://localhost:8000
 ```
 
 **Manual Setup**
 
 ```bash
-go mod download
+make deps
 make migrate-up
 make run
 ```
@@ -163,8 +163,7 @@ make run
 **Hot Reload (Development)**
 
 ```bash
-go install github.com/cosmtrek/air@latest
-air
+make dev
 ```
 
 ## Environment Variables
@@ -226,39 +225,33 @@ air
 ## Make Commands
 
 ```bash
-# Build
-make build              # Build application binary
+# Development
+make run                         # Run application
+make dev                         # Run with hot reload using air
+make deps                        # Tidy and verify dependencies
+make bin-deps                    # Install development tools
 
-# Run
-make run                # Run application
-make compose-up         # Start Docker services
-make compose-down       # Stop Docker services
-make compose-logs       # View Docker logs
+# Docker
+make compose-up                  # Start database only
+make compose-up-all              # Start database + app
+make compose-down                # Stop all Docker services
+make nuke                        # Remove all containers, volumes, and networks
 
 # Database
-make migrate-create     # Create new migration
-make migrate-up         # Run migrations
-make migrate-down       # Rollback last migration
-make migrate-force      # Force version (usage: make migrate-force VERSION=001)
+make migrate-create NAME=name    # Create new migration
+make migrate-up                  # Run migrations
+make migrate-down                # Rollback last migration (1 step)
+make migrate-down-all            # Rollback all migrations
+make seed                        # Run database seeder
 
-# Utilities
-make nuke               # Remove all containers, volumes, and images
-make clean              # Clean build artifacts
-```
+# Testing
+make test                        # Run unit tests
+make integration-test            # Run integration tests
 
-## Development
-
-### Running Tests
-
-```bash
-# Run all tests
-go test ./...
-
-# Run tests with coverage
-go test -cover ./...
-
-# Run tests with race detection
-go test -race ./...
+# Code Quality
+make format                      # Format code
+make linter-golangci             # Run golangci-lint
+make pre-commit                  # Run pre-commit checks
 ```
 
 ## Architecture Highlights
@@ -312,3 +305,49 @@ All API responses follow this format:
   }
 }
 ```
+
+## Testing
+
+### Integration Tests
+
+Integration tests verify the entire API flow from HTTP requests to database operations.
+
+```bash
+# Start services first
+make compose-up-all
+
+# Run integration tests using make
+make integration-test
+
+# Or run directly with go
+go test -v ./integration-test/... -count=1
+```
+
+### Unit Tests
+
+```bash
+# Run unit tests using make
+make test
+
+# Or run with go directly
+go test ./...
+
+# Run tests with coverage
+go test -cover ./...
+
+# Run tests with race detection
+go test -race ./...
+
+# Run tests with verbose output
+go test -v ./...
+```
+
+### Test with Bruno
+
+For manual API testing, use the [Bruno Collection](docs/api/):
+
+1. Install [Bruno](https://www.usebruno.com/)
+2. Import collection from `docs/api/`
+3. Test all endpoints interactively
+
+See [Bruno Documentation](docs/api/README.md) for detailed usage instructions.

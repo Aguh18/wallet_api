@@ -39,8 +39,8 @@ dist/
 build/
 
 # Project-specific binaries
-app
-seed
+./app
+./seed
 /main
 
 # Test binaries

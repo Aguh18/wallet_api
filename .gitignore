@@ -3,13 +3,15 @@
 # ========================================
 .idea
 .vscode
-.claude
+.claude/*
+.claude/
 *.swp
 *.swo
 *~
 .project
 .classpath
 .settings/
+./claude
 
 # ========================================
 # Environment & Secrets (IMPORTANT!)

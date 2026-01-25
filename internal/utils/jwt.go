@@ -2,6 +2,9 @@ package utils
 
 import (
 	"errors"
+	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,9 +20,6 @@ var (
 
 	// ErrTokenMalformed menandakan token format salah
 	ErrTokenMalformed = errors.New("token is malformed")
-
-	// Secret key untuk signing (harusnya dari environment variable)
-	jwtSecret = []byte("your-secret-key-change-this-in-production")
 )
 
 type Claims struct {
@@ -40,12 +40,27 @@ type JWTManager struct {
 	refreshTokenDuration time.Duration
 }
 
+// NewJWTManager creates JWT manager with configuration from environment variables
 func NewJWTManager(secretKey string) *JWTManager {
+	// Baca konfigurasi dari environment variables
+	accessTokenExpiry := getEnvAsInt("ACCESS_TOKEN_EXPIRY", 15)  // default 15 menit
+	refreshTokenExpiry := getEnvAsInt("REFRESH_TOKEN_EXPIRY", 7)  // default 7 hari
+
 	return &JWTManager{
 		secretKey:            []byte(secretKey),
-		accessTokenDuration:  15 * time.Minute,  // Access token: 15 menit
-		refreshTokenDuration: 7 * 24 * time.Hour, // Refresh token: 7 hari
+		accessTokenDuration:  time.Duration(accessTokenExpiry) * time.Minute,
+		refreshTokenDuration: time.Duration(refreshTokenExpiry) * 24 * time.Hour,
 	}
+}
+
+// getEnvAsInt reads environment variable as integer with default value
+func getEnvAsInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intVal, err := strconv.Atoi(value); err == nil {
+			return intVal
+		}
+	}
+	return defaultValue
 }
 
 func (j *JWTManager) GenerateToken(userID uuid.UUID, username string) (*TokenPair, error) {
@@ -149,20 +164,12 @@ func (j *JWTManager) RefreshAccessToken(refreshTokenString string) (string, erro
 	return newAccessToken.SignedString(j.secretKey)
 }
 
-func ExtractUserID(tokenString string) (uuid.UUID, error) {
-	// Use default secret for backward compatibility
-	manager := NewJWTManager(string(jwtSecret))
-	claims, err := manager.ValidateToken(tokenString)
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return claims.UserID, nil
-}
-
-func SetSecretKey(secret string) {
-	jwtSecret = []byte(secret)
-}
-
+// GetSecretKey returns JWT secret from environment variable
 func GetSecretKey() string {
-	return string(jwtSecret)
+	if secret := os.Getenv("JWT_SECRET"); secret != "" {
+		return secret
+	}
+	// Fallback ke default untuk development dengan WARNING
+	log.Println("⚠️  WARNING: Menggunakan default JWT secret! Set JWT_SECRET environment variable untuk production!")
+	return "your-secret-key-change-this-in-production"
 }

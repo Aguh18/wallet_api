@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallet-api
+  namespace: wallet
+  labels:
+    app: wallet-api
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: wallet-api
+  template:
+    metadata:
+      labels:
+        app: wallet-api
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres-service 5432; do
+                echo "Waiting for postgres..."
+                sleep 2
+              done
+              echo "Postgres is ready!"
+
+      containers:
+        - name: wallet-api
+          image: ghcr.io/aguh18/wallet_api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: APP_ENV
+            - name: APP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: APP_PORT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: LOG_LEVEL
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: DB_NAME
+            - name: DB_SSL_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: DB_SSL_MODE
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: wallet-api-secret
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wallet-api-secret
+                  key: DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: wallet-api-secret
+                  key: JWT_SECRET
+            - name: JWT_ACCESS_TOKEN_EXPIRY
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: JWT_ACCESS_TOKEN_EXPIRY
+            - name: JWT_REFRESH_TOKEN_EXPIRY
+              valueFrom:
+                configMapKeyRef:
+                  name: wallet-api-config
+                  key: JWT_REFRESH_TOKEN_EXPIRY
+            - name: PG_URL
+              value: "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3

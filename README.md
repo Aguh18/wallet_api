@@ -1,94 +1,94 @@
 # Wallet API
 
-Simple REST API wallet service built with Go and Clean Architecture principles.
+Layanan REST API wallet sederhana yang dibangun dengan Go dan prinsip Clean Architecture.
 
 [![Bruno Collection](https://img.shields.io/badge/API_Testing-Browser-blue?logo=usebruno)](docs/api/)
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> **🚀 Quick Start**: [Bruno API Collection](docs/api/) available for testing all endpoints!
+> **🚀 Mulai Cepat**: [Bruno API Collection](docs/api/) tersedia untuk testing semua endpoint!
 
-## Features
+## Fitur
 
-- **User Authentication**
-  - JWT-based authentication (access + refresh tokens)
-  - HttpOnly cookie-based token storage (XSS protection)
-  - Secure password hashing with bcrypt
-  - User registration and login
+- **Autentikasi Pengguna**
+  - Autentikasi berbasis JWT (access + refresh tokens)
+  - Penyimpanan token berbasis cookie HttpOnly (proteksi XSS)
+  - Hashing password aman dengan bcrypt
+  - Registrasi dan login pengguna
 
-- **Account Management**
-  - Create multiple accounts per user
-  - Support for multiple currencies
-  - Account status management (active, inactive, frozen)
+- **Manajemen Akun**
+  - Buat banyak akun per pengguna
+  - Dukungan banyak mata uang
+  - Manajemen status akun (aktif, tidak aktif, dibekukan)
 
-- **Transaction Processing**
-  - Deposit and withdraw funds
-  - Transfer funds between accounts
-  - Transaction history with pagination
-  - Balance tracking (before/after transaction)
-  - Idempotency support with reference ID
-  - Pessimistic locking (SELECT FOR UPDATE) to prevent race conditions
-  - Atomic transactions for data consistency
+- **Pemrosesan Transaksi**
+  - Setor dan tarik dana
+  - Transfer dana antar akun
+  - Riwayat transaksi dengan pagination
+  - Pelacakan saldo (sebelum/setelah transaksi)
+  - Dukungan idempotensi dengan reference ID
+  - Pessimistic locking (SELECT FOR UPDATE) untuk mencegah race conditions
+  - Transaksi atomik untuk konsistensi data
 
-- **Security**
-  - Cookie-based authentication (HttpOnly, Secure, SameSite)
-  - Password hashing with bcrypt (cost 12)
-  - JWT access tokens (15 min expiry)
-  - JWT refresh tokens (7 days expiry)
-  - Input validation
+- **Keamanan**
+  - Autentikasi berbasis cookie (HttpOnly, Secure, SameSite)
+  - Hashing password dengan bcrypt (cost 12)
+  - JWT access tokens (kadaluarsa 15 menit)
+  - JWT refresh tokens (kadaluarsa 7 hari)
+  - Validasi input
 
-- **Architecture**
-  - Clean Architecture with pragmatic approach
-  - Modular structure (user, account modules)
-  - Interface-based dependency injection
+- **Arsitektur**
+  - Clean Architecture dengan pendekatan pragmatis
+  - Struktur modular (user, account modules)
+  - Dependency injection berbasis interface
   - Generic base repository pattern
   - Request/Response DTOs
-  - Bruno API collection for testing
+  - Bruno API collection untuk testing
 
 ## Tech Stack
 
-- **Language**: Go 1.25
+- **Bahasa**: Go 1.25
 - **Web Framework**: Fiber v2.52.10
 - **ORM**: GORM v1.31.1
 - **Database**: PostgreSQL 18
-- **Authentication**: JWT (golang-jwt/jwt/v5)
+- **Autentikasi**: JWT (golang-jwt/jwt/v5)
 - **Migrations**: golang-migrate/migrate
 - **Password Hashing**: bcrypt
 - **Hot Reload**: Air (development)
 - **API Testing**: Bruno collection included
 
-## Project Structure
+## Struktur Project
 
 ```
 wallet_api/
 ├── cmd/
 │   └── app/
-│       └── main.go              # Application entry point
+│       └── main.go              # Entry point aplikasi
 ├── internal/
 │   ├── app/
-│   │   ├── app.go               # Application initialization
+│   │   ├── app.go               # Inisialisasi aplikasi
 │   │   └── migrate.go           # Database migrations
 │   ├── common/
 │   │   ├── base/
 │   │   │   └── base.repository.go   # Generic repository pattern
 │   │   ├── consts/
-│   │   │   └── consts.go            # Application constants
+│   │   │   └── consts.go            # Konstanta aplikasi
 │   │   ├── errors/
-│   │   │   └── error.go             # Error types
+│   │   │   └── error.go             # Tipe error
 │   │   └── response/
-│   │       └── response.go          # API response helpers
+│   │       └── response.go          # Helper response API
 │   ├── entity/
-│   │   ├── user.go               # User entity
-│   │   ├── account.go            # Account entity
-│   │   ├── transaction.go        # Transaction entity
-│   │   ├── session.go            # Session entity
-│   │   └── access_token.go       # Access token entity
+│   │   ├── user.go               # Entity user
+│   │   ├── account.go            # Entity account
+│   │   ├── transaction.go        # Entity transaction
+│   │   ├── session.go            # Entity session
+│   │   └── access_token.go       # Entity access token
 │   ├── middleware/
-│   │   ├── auth.go               # JWT authentication middleware
-│   │   ├── logger.go             # HTTP request logging
+│   │   ├── auth.go               # Middleware autentikasi JWT
+│   │   ├── logger.go             # Logging request HTTP
 │   │   └── recovery.go           # Panic recovery
 │   ├── module/
-│   │   ├── account/              # Account module
+│   │   ├── account/              # Module account
 │   │   │   ├── account.module.go
 │   │   │   ├── account.router.go
 │   │   │   ├── handler/
@@ -103,7 +103,7 @@ wallet_api/
 │   │   │       │   └── account.request.go
 │   │   │       └── response/
 │   │   │           └── account.response.go
-│   │   └── user/                 # User module
+│   │   └── user/                 # Module user
 │   │       ├── user.module.go
 │   │       ├── user.router.go
 │   │       ├── handler/
@@ -118,41 +118,41 @@ wallet_api/
 │   │           └── response/
 │   │               └── user.response.go
 │   ├── router/
-│   │   └── module.go             # Global router initialization
+│   │   └── module.go             # Inisialisasi router global
 │   └── utils/
-│       ├── jwt.go                # JWT utilities
-│       ├── cookie.go             # Cookie management
-│       └── password.go           # Password hashing
+│       ├── jwt.go                # Utilitas JWT
+│       ├── cookie.go             # Manajemen cookie
+│       └── password.go           # Hashing password
 ├── migrations/                   # Database migrations
-├── .air.toml                    # Air hot reload config
+├── .air.toml                    # Konfigurasi hot reload Air
 ├── docker-compose.yml           # Docker services
 ├── Dockerfile                    # Multi-stage Docker build
-├── Makefile                     # Build & run commands
-└── go.mod                       # Go dependencies
+├── Makefile                     # Perintah build & run
+└── go.mod                       # Dependensi Go
 ```
 
-## Quick Start
+## Mulai Cepat
 
-### Test API with Bruno
+### Test API dengan Bruno
 
-Don't want to code? Test all endpoints immediately!
+Tidak mau coding? Test semua endpoint langsung!
 
 1. Install [Bruno](https://www.usebruno.com/)
 2. Import [Bruno Collection](docs/api/)
-3. Start testing all endpoints
+3. Mulai test semua endpoint
 
-[📖 Full Documentation](docs/api/README.md)
+[📖 Dokumentasi Lengkap](docs/api/README.md)
 
-### Run the Application
+### Jalankan Aplikasi
 
-**Using Docker Compose (Recommended)**
+**Menggunakan Docker Compose (Disarankan)**
 
 ```bash
 make compose-up-all
-# App available at http://localhost:8000
+# Aplikasi tersedia di http://localhost:8000
 ```
 
-**Manual Setup**
+**Setup Manual**
 
 ```bash
 make deps
@@ -166,114 +166,114 @@ make run
 make dev
 ```
 
-## Environment Variables
+## Variabel Lingkungan
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `APP_NAME` | Application name | `wallet_api` |
-| `APP_VERSION` | Application version | `1.0.0` |
-| `HTTP_PORT` | HTTP server port | `8000` |
-| `LOG_LEVEL` | Logging level | `debug` |
-| `PG_URL` | PostgreSQL connection string | - |
-| `PG_POOL_MAX` | Database max connections | `2` |
-| `JWT_SECRET` | JWT signing secret | - |
-| `ACCESS_TOKEN_EXPIRY` | Access token expiry (minutes) | `15` |
-| `REFRESH_TOKEN_EXPIRY` | Refresh token expiry (days) | `7` |
+| Variabel | Deskripsi | Default |
+|----------|-----------|---------|
+| `APP_NAME` | Nama aplikasi | `wallet_api` |
+| `APP_VERSION` | Versi aplikasi | `1.0.0` |
+| `HTTP_PORT` | Port server HTTP | `8000` |
+| `LOG_LEVEL` | Level logging | `debug` |
+| `PG_URL` | Connection string PostgreSQL | - |
+| `PG_POOL_MAX` | Koneksi maksimum database | `2` |
+| `JWT_SECRET` | Secret key untuk JWT | - |
+| `ACCESS_TOKEN_EXPIRY` | Kadaluarsa access token (menit) | `15` |
+| `REFRESH_TOKEN_EXPIRY` | Kadaluarsa refresh token (hari) | `7` |
 
 ## API Endpoints
 
-### Authentication
+### Autentikasi
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/v1/auth/register` | Register new user | No |
-| POST | `/v1/auth/login` | Login user | No |
-| POST | `/v1/auth/logout` | Logout user | Yes |
-| POST | `/v1/auth/refresh` | Refresh access token | No |
+| Method | Endpoint | Deskripsi | Auth Required |
+|--------|----------|-----------|---------------|
+| POST | `/v1/auth/register` | Registrasi user baru | Tidak |
+| POST | `/v1/auth/login` | Login user | Tidak |
+| POST | `/v1/auth/logout` | Logout user | Ya |
+| POST | `/v1/auth/refresh` | Refresh access token | Tidak |
 
-### User Profile
+### Profil User
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/v1/users/profile` | Get user profile | Yes |
-| PUT | `/v1/users/profile` | Update user profile | Yes |
+| Method | Endpoint | Deskripsi | Auth Required |
+|--------|----------|-----------|---------------|
+| GET | `/v1/users/profile` | Ambil profil user | Ya |
+| PUT | `/v1/users/profile` | Update profil user | Ya |
 
-### Accounts
+### Akun
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/v1/accounts` | Create new account | Yes |
-| GET | `/v1/accounts/:id` | Get account by ID | Yes |
-| GET | `/v1/accounts` | Get all user accounts | Yes |
-| POST | `/v1/accounts/:id/deposit` | Deposit to account | Yes |
-| POST | `/v1/accounts/:id/withdraw` | Withdraw from account | Yes |
-| POST | `/v1/accounts/:id/transfer` | Transfer to another account | Yes |
-| GET | `/v1/accounts/:id/transactions` | Get account transactions | Yes |
+| Method | Endpoint | Deskripsi | Auth Required |
+|--------|----------|-----------|---------------|
+| POST | `/v1/accounts` | Buat akun baru | Ya |
+| GET | `/v1/accounts/:id` | Ambil akun berdasarkan ID | Ya |
+| GET | `/v1/accounts` | Ambil semua akun user | Ya |
+| POST | `/v1/accounts/:id/deposit` | Setor ke akun | Ya |
+| POST | `/v1/accounts/:id/withdraw` | Tarik dari akun | Ya |
+| POST | `/v1/accounts/:id/transfer` | Transfer ke akun lain | Ya |
+| GET | `/v1/accounts/:id/transactions` | Ambil transaksi akun | Ya |
 
 ### Health Check
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/healthz` | Health check endpoint |
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | `/healthz` | Endpoint health check |
 
-## Database Schema
+## Skema Database
 
 ### Entity Relationship Diagram
 
 ![Database ERD](docs/images/erd.png)
 
-## Make Commands
+## Perintah Make
 
 ```bash
 # Development
-make run                         # Run application
-make dev                         # Run with hot reload using air
-make deps                        # Tidy and verify dependencies
+make run                         # Jalankan aplikasi
+make dev                         # Jalankan dengan hot reload menggunakan air
+make deps                        # Tidy dan verifikasi dependensi
 make bin-deps                    # Install development tools
 
 # Docker
-make compose-up                  # Start database only
+make compose-up                  # Start database saja
 make compose-up-all              # Start database + app
-make compose-down                # Stop all Docker services
-make nuke                        # Remove all containers, volumes, and networks
+make compose-down                # Stop semua Docker services
+make nuke                        # Hapus semua containers, volumes, dan networks
 
 # Database
-make migrate-create NAME=name    # Create new migration
-make migrate-up                  # Run migrations
-make migrate-down                # Rollback last migration (1 step)
-make migrate-down-all            # Rollback all migrations
-make seed                        # Run database seeder
+make migrate-create NAME=name    # Buat migration baru
+make migrate-up                  # Jalankan migrations
+make migrate-down                # Rollback migration terakhir (1 langkah)
+make migrate-down-all            # Rollback semua migrations
+make seed                        # Jalankan database seeder
 
 # Testing
-make test                        # Run unit tests
-make integration-test            # Run integration tests
+make test                        # Jalankan unit tests
+make integration-test            # Jalankan integration tests
 
 # Code Quality
 make format                      # Format code
-make linter-golangci             # Run golangci-lint
-make pre-commit                  # Run pre-commit checks
+make linter-golangci             # Jalankan golangci-lint
+make pre-commit                  # Jalankan pre-commit checks
 ```
 
-## Architecture Highlights
+## Highlight Arsitektur
 
-### Clean Architecture Diagram
+### Diagram Clean Architecture
 
 ![Clean Architecture](docs/images/cleanArchitect.webp)
 
-### Clean Architecture Principles
+### Prinsip Clean Architecture
 
-- **Dependency Injection**: All dependencies injected through constructors
-- **Interface-based Design**: Repository and UseCase defined as interfaces
-- **Layer Separation**: Handler → UseCase → Repository → Entity
-- **Encapsulation**: Private concrete types, public interfaces
+- **Dependency Injection**: Semua dependensi di-inject melalui constructor
+- **Desain Berbasis Interface**: Repository dan UseCase didefinisikan sebagai interface
+- **Pemisahan Layer**: Handler → UseCase → Repository → Entity
+- **Enkapsulasi**: Tipe concrete private, interface public
 
-### Module Structure
+### Struktur Module
 
-Each module follows this pattern:
+Setiap module mengikuti pola ini:
 ```
 module/
-├── module.go         # Module initialization (DI)
-├── router.go         # Route registration
+├── module.go         # Inisialisasi module (DI)
+├── router.go         # Registrasi route
 ├── handler/          # HTTP handlers
 ├── usecase/          # Business logic
 ├── repository/       # Data access
@@ -282,26 +282,26 @@ module/
     └── response/     # Response DTOs + mappers
 ```
 
-## Response Format
+## Format Response
 
-All API responses follow this format:
+Semua response API mengikuti format ini:
 
-**Success Response**:
+**Response Sukses**:
 ```json
 {
   "success": true,
-  "message": "Operation successful",
+  "message": "Operasi berhasil",
   "data": { ... }
 }
 ```
 
-**Error Response**:
+**Response Error**:
 ```json
 {
   "success": false,
   "error": {
     "code": 400,
-    "message": "Error message"
+    "message": "Pesan error"
   }
 }
 ```
@@ -310,44 +310,91 @@ All API responses follow this format:
 
 ### Integration Tests
 
-Integration tests verify the entire API flow from HTTP requests to database operations.
+Integration tests memverifikasi seluruh flow API dari HTTP request sampai operasi database.
 
 ```bash
-# Start services first
+# Start services terlebih dahulu
 make compose-up-all
 
-# Run integration tests using make
+# Jalankan integration tests menggunakan make
 make integration-test
 
-# Or run directly with go
+# Atau jalankan langsung dengan go
 go test -v ./integration-test/... -count=1
 ```
 
 ### Unit Tests
 
 ```bash
-# Run unit tests using make
+# Jalankan unit tests menggunakan make
 make test
 
-# Or run with go directly
+# Atau jalankan dengan go langsung
 go test ./...
 
-# Run tests with coverage
+# Jalankan tests dengan coverage
 go test -cover ./...
 
-# Run tests with race detection
+# Jalankan tests dengan race detection
 go test -race ./...
 
-# Run tests with verbose output
+# Jalankan tests dengan verbose output
 go test -v ./...
 ```
 
-### Test with Bruno
+### Test dengan Bruno
 
-For manual API testing, use the [Bruno Collection](docs/api/):
+Untuk testing API manual, gunakan [Bruno Collection](docs/api/):
 
 1. Install [Bruno](https://www.usebruno.com/)
-2. Import collection from `docs/api/`
-3. Test all endpoints interactively
+2. Import collection dari `docs/api/`
+3. Test semua endpoint secara interaktif
 
-See [Bruno Documentation](docs/api/README.md) for detailed usage instructions.
+Lihat [Dokumentasi Bruno](docs/api/README.md) untuk instruksi penggunaan detail.
+
+## DevOps & Deployment
+
+Setup DevOps lengkap untuk production deployment tersedia di direktori `/devops-challenge`:
+
+### 🐳 Docker & Docker Compose
+- Multi-stage Dockerfile untuk image production yang optimal
+- Docker Compose untuk local development dan testing
+- Health checks dan security best practices
+
+### ☸️ Kubernetes Deployment
+- Complete K8s manifests (Deployment, Service, Ingress, HPA)
+- ConfigMap untuk configuration management
+- Secrets untuk sensitive data (DB credentials, JWT secret)
+- PostgreSQL StatefulSet dengan persistent storage
+- Horizontal Pod Autoscaler (3-10 replicas)
+- Script auto-deployment
+
+### 🔄 CI/CD Pipeline (GitHub Actions)
+- Automated testing dengan PostgreSQL service
+- Build & push Docker image ke GHCR
+- Coverage reporting
+- Automatic deployment ke Kubernetes (optional)
+
+### 📚 Dokumentasi Lengkap
+Lihat dokumentasi lengkap di:
+- [DevOps Challenge README](devops-challenge/README.md) - Panduan deployment lengkap
+- [File Organization](devops-challenge/FILE_ORGANIZATION.md) - Penjelasan struktur file
+
+### Quick Deploy
+
+```bash
+# Local dengan Docker Compose
+cd devops-challenge
+docker-compose up -d
+
+# Deploy ke Kubernetes
+cd devops-challenge/k8s
+./deploy.sh
+```
+
+**Deployment Pipeline:**
+1. ✅ Push code ke GitHub
+2. ✅ GitHub Actions run tests
+3. ✅ Build Docker image (jika tests pass)
+4. ✅ Push ke GitHub Container Registry
+5. ✅ Deploy ke Kubernetes cluster (optional)

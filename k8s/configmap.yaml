@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wallet-api-config
+  namespace: wallet
+data:
+  APP_ENV: "production"
+  APP_PORT: "8080"
+  LOG_LEVEL: "info"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "wallet_db"
+  DB_SSL_MODE: "disable"
+  JWT_ACCESS_TOKEN_EXPIRY: "15m"
+  JWT_REFRESH_TOKEN_EXPIRY: "168h"

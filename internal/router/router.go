@@ -24,7 +24,7 @@ func NewRouter(
 	app.Use(cors.New())
 	app.Use(recover.New())
 
-	// Health check
+	// Health check endpoint (Kubernetes standard)
 	app.Get("/healthz", func(c *fiber.Ctx) error {
 		return c.Status(http.StatusOK).JSON(fiber.Map{
 			"status": "ok",

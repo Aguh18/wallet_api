@@ -4,7 +4,12 @@ import (
 	"fmt"
 
 	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 )
+
+func init() {
+	_ = godotenv.Load()
+}
 
 type (
 	// Config -.
@@ -13,6 +18,7 @@ type (
 		HTTP HTTP
 		Log  Log
 		PG   PG
+		JWT  JWT
 	}
 
 	// App -.
@@ -36,6 +42,13 @@ type (
 	PG struct {
 		PoolMax int    `env:"PG_POOL_MAX,required"`
 		URL     string `env:"PG_URL,required"`
+	}
+
+	// JWT -.
+	JWT struct {
+		Secret             string `env:"JWT_SECRET,required"`
+		AccessTokenExpiry  int    `env:"ACCESS_TOKEN_EXPIRY" envDefault:"15"`
+		RefreshTokenExpiry int    `env:"REFRESH_TOKEN_EXPIRY" envDefault:"7"`
 	}
 )
 

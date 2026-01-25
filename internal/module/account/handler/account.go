@@ -1,9 +1,7 @@
 package handler
 
 import (
-	"time"
 	"wallet_api/internal/common/response"
-	"wallet_api/internal/entity"
 	"wallet_api/internal/module/account/dto/request"
 	resp "wallet_api/internal/module/account/dto/response"
 	"wallet_api/internal/module/account/usecase"
@@ -24,33 +22,6 @@ func New(uc *usecase.UseCase, log logger.Interface) *Handler {
 	}
 }
 
-func (h *Handler) toAccountResponse(account *entity.Account) resp.AccountResponse {
-	return resp.AccountResponse{
-		ID:          account.ID.String(),
-		UserID:      account.UserID.String(),
-		AccountName: account.AccountName,
-		Currency:    account.Currency,
-		Balance:     account.Balance,
-		Status:      account.Status,
-		CreatedAt:   account.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   account.UpdatedAt.Format(time.RFC3339),
-	}
-}
-
-func (h *Handler) toTransactionResponse(transaction *entity.Transaction) resp.TransactionResponse {
-	return resp.TransactionResponse{
-		ID:            transaction.ID.String(),
-		AccountID:     transaction.AccountID.String(),
-		ReferenceID:   transaction.ReferenceID,
-		Type:          transaction.Type,
-		Amount:        transaction.Amount,
-		BalanceBefore: transaction.BalanceBefore,
-		BalanceAfter:  transaction.BalanceAfter,
-		Description:   transaction.Description,
-		CreatedAt:     transaction.CreatedAt.Format(time.RFC3339),
-	}
-}
-
 func (h *Handler) CreateAccount(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
 
@@ -65,7 +36,7 @@ func (h *Handler) CreateAccount(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to create account"))
 	}
 
-	return c.JSON(response.Success(h.toAccountResponse(account), "Account created successfully"))
+	return c.JSON(response.Success(resp.ToAccountDto(account), "Account created successfully"))
 }
 
 func (h *Handler) GetAccount(c *fiber.Ctx) error {
@@ -81,7 +52,7 @@ func (h *Handler) GetAccount(c *fiber.Ctx) error {
 		return c.Status(404).JSON(response.Error(404, "Account not found"))
 	}
 
-	return c.JSON(response.Success(h.toAccountResponse(account), "Account retrieved"))
+	return c.JSON(response.Success(resp.ToAccountDto(account), "Account retrieved"))
 }
 
 func (h *Handler) GetUserAccounts(c *fiber.Ctx) error {
@@ -93,12 +64,7 @@ func (h *Handler) GetUserAccounts(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to get accounts"))
 	}
 
-	responses := make([]resp.AccountResponse, len(accounts))
-	for i, account := range accounts {
-		responses[i] = h.toAccountResponse(account)
-	}
-
-	return c.JSON(response.Success(responses, "Accounts retrieved"))
+	return c.JSON(response.Success(resp.ToAccountDtos(accounts), "Accounts retrieved"))
 }
 
 func (h *Handler) Deposit(c *fiber.Ctx) error {
@@ -165,10 +131,5 @@ func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to get transactions"))
 	}
 
-	responses := make([]resp.TransactionResponse, len(transactions))
-	for i, transaction := range transactions {
-		responses[i] = h.toTransactionResponse(transaction)
-	}
-
-	return c.JSON(response.Success(responses, "Transactions retrieved"))
+	return c.JSON(response.Success(resp.ToTransactionDtos(transactions), "Transactions retrieved"))
 }

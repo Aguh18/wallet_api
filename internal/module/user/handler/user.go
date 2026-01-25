@@ -29,14 +29,6 @@ func New(uc *usecase.UseCase, log logger.Interface) *Handler {
 	}
 }
 
-func (h *Handler) toUserResponse(user *entity.User) resp.UserResponse {
-	return resp.UserResponse{
-		ID:        user.ID.String(),
-		Username:  user.Username,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
-	}
-}
-
 func (h *Handler) Register(c *fiber.Ctx) error {
 	req := new(request.RegisterRequest)
 	if err := c.BodyParser(req); err != nil {
@@ -69,7 +61,7 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 	// Set auth cookies
 	utils.SetAuthCookies(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second)
 
-	return c.JSON(response.Success(h.toUserResponse(user), "User registered successfully"))
+	return c.JSON(response.Success(resp.ToUserDto(user), "User registered successfully"))
 }
 
 func (h *Handler) Login(c *fiber.Ctx) error {
@@ -94,7 +86,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	// Set auth cookies
 	utils.SetAuthCookies(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second)
 
-	return c.JSON(response.Success(h.toUserResponse(user), "Login successful"))
+	return c.JSON(response.Success(resp.ToUserDto(user), "Login successful"))
 }
 
 func (h *Handler) GetProfile(c *fiber.Ctx) error {
@@ -106,7 +98,7 @@ func (h *Handler) GetProfile(c *fiber.Ctx) error {
 		return c.Status(404).JSON(response.Error(404, "User not found"))
 	}
 
-	return c.JSON(response.Success(h.toUserResponse(user), "Profile retrieved"))
+	return c.JSON(response.Success(resp.ToUserDto(user), "Profile retrieved"))
 }
 
 func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
@@ -129,7 +121,7 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to update profile"))
 	}
 
-	return c.JSON(response.Success(h.toUserResponse(user), "Profile updated"))
+	return c.JSON(response.Success(resp.ToUserDto(user), "Profile updated"))
 }
 
 func (h *Handler) Logout(c *fiber.Ctx) error {

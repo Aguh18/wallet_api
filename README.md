@@ -62,8 +62,10 @@ Layanan REST API wallet sederhana yang dibangun dengan Go dan prinsip Clean Arch
 ```
 wallet_api/
 ├── cmd/
-│   └── app/
-│       └── main.go              # Entry point aplikasi
+│   ├── app/
+│   │   └── main.go              # Entry point aplikasi
+│   └── seed/
+│       └── main.go              # Database seeder
 ├── internal/
 │   ├── app/
 │   │   ├── app.go               # Inisialisasi aplikasi
@@ -118,13 +120,30 @@ wallet_api/
 │   │           └── response/
 │   │               └── user.response.go
 │   ├── router/
-│   │   └── module.go             # Inisialisasi router global
+│   │   ├── module.go             # Inisialisasi router global
+│   │   └── router.go            # Router setup dengan middleware
 │   └── utils/
-│       ├── jwt.go                # Utilitas JWT
+│       ├── jwt.go                # Utilitas JWT (baca dari env)
 │       ├── cookie.go             # Manajemen cookie
 │       └── password.go           # Hashing password
+├── config/
+│   └── config.go                # Konfigurasi aplikasi (load .env)
+├── pkg/
+│   ├── httpserver/              # HTTP server wrapper
+│   ├── logger/                  # Logger interface
+│   └── postgres/                # PostgreSQL connection
 ├── migrations/                   # Database migrations
+├── integration-test/            # Integration tests
+│   └── integration_test.go      # Complete API test suite
+├── docs/
+│   ├── images/                  # Diagrams (ERD, Clean Architecture)
+│   └── api/                     # Bruno API collection
+├── devops-challenge/            # DevOps & deployment setup
+│   ├── k8s/                     # Kubernetes manifests
+│   └── *.yml                    # Docker & CI/CD configs
 ├── .air.toml                    # Konfigurasi hot reload Air
+├── .env                         # Environment variables (local)
+├── .env.example                 # Template environment variables
 ├── docker-compose.yml           # Docker services
 ├── Dockerfile                    # Multi-stage Docker build
 ├── Makefile                     # Perintah build & run
@@ -149,7 +168,7 @@ Tidak mau coding? Test semua endpoint langsung!
 
 ```bash
 make compose-up-all
-# Aplikasi tersedia di http://localhost:8000
+# Aplikasi tersedia di http://localhost:8080
 ```
 
 **Setup Manual**
@@ -172,7 +191,7 @@ make dev
 |----------|-----------|---------|
 | `APP_NAME` | Nama aplikasi | `wallet_api` |
 | `APP_VERSION` | Versi aplikasi | `1.0.0` |
-| `HTTP_PORT` | Port server HTTP | `8000` |
+| `HTTP_PORT` | Port server HTTP | `8080` |
 | `LOG_LEVEL` | Level logging | `debug` |
 | `PG_URL` | Connection string PostgreSQL | - |
 | `PG_POOL_MAX` | Koneksi maksimum database | `2` |

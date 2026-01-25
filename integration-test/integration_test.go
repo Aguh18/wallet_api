@@ -21,7 +21,7 @@ const (
 	attempts = 20
 
 	// Connection settings
-	httpURL        = "http://" + host + ":8000"
+	httpURL        = "http://" + host + ":8080"
 	healthPath     = httpURL + "/healthz"
 	requestTimeout = 10 * time.Second
 

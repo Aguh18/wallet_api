@@ -38,14 +38,14 @@ services:
       DB_HOST: db
       PG_URL: postgres://${DB_USER:-wallet_user}:${DB_PASS:-wallet_password}@db:${DB_PORT:-5432}/${DB_NAME:-wallet_db}?sslmode=disable
     ports:
-      - "${HTTP_PORT:-8000}:8000"
+      - "${HTTP_PORT:-8080}:8080"
     networks:
       - app_network
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
       interval: 30s
       timeout: 3s
       retries: 3

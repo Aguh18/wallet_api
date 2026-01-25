@@ -46,8 +46,11 @@ jobs:
       - name: Run tests
         env:
           PG_URL: postgres://wallet_user:wallet_password@localhost:5432/wallet_db?sslmode=disable
+          JWT_SECRET: test-secret-key-for-ci-cd
+          ACCESS_TOKEN_EXPIRY: 15
+          REFRESH_TOKEN_EXPIRY: 7
         run: |
-          go test -v -race -covermode=atomic -coverprofile=coverage.txt ./internal/... ./pkg/...
+          make test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

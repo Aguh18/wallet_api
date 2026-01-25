@@ -97,8 +97,11 @@ migrate-down-all: ### migration down (all)
 
 ##@ Testing
 test: ### run test
-	go test -v -race -covermode atomic -coverprofile=coverage.txt ./internal/... ./pkg/...
-.PHONY: test
+	go test -v -coverprofile=coverage.txt ./internal/... ./pkg/...
+
+test-race: ### run test with race detection
+	go test -v -race -coverprofile=coverage.txt ./internal/... ./pkg/...
+.PHONY: test test-race
 
 integration-test: ### run integration-test
 	go clean -testcache && go test -v ./integration-test/...

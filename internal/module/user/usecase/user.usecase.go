@@ -6,32 +6,30 @@ import (
 
 	"wallet_api/internal/common/errors"
 	"wallet_api/internal/entity"
+	"wallet_api/internal/module/user/repository"
 	"wallet_api/internal/utils"
 
 	"github.com/google/uuid"
 )
 
-type UseCase struct {
-	repo interface {
-		Create(ctx context.Context, user *entity.User) error
-		FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
-		FindByUsername(ctx context.Context, username string) (*entity.User, error)
-		Update(ctx context.Context, user *entity.User) error
-	}
+type UseCase interface {
+	Register(ctx context.Context, user *entity.User) error
+	Login(ctx context.Context, username, password string) (*entity.User, error)
+	GetProfile(ctx context.Context, userID uuid.UUID) (*entity.User, error)
+	UpdateProfile(ctx context.Context, user *entity.User) error
 }
 
-func New(repo interface {
-	Create(ctx context.Context, user *entity.User) error
-	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
-	FindByUsername(ctx context.Context, username string) (*entity.User, error)
-	Update(ctx context.Context, user *entity.User) error
-}) *UseCase {
-	return &UseCase{
+type useCase struct {
+	repo repository.UserRepository
+}
+
+func New(repo repository.UserRepository) UseCase {
+	return &useCase{
 		repo: repo,
 	}
 }
 
-func (uc *UseCase) Register(ctx context.Context, user *entity.User) error {
+func (uc *useCase) Register(ctx context.Context, user *entity.User) error {
 	// Check if username exists
 	existing, err := uc.repo.FindByUsername(ctx, user.Username)
 	if err != nil {
@@ -56,7 +54,7 @@ func (uc *UseCase) Register(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (uc *UseCase) Login(ctx context.Context, username, password string) (*entity.User, error) {
+func (uc *useCase) Login(ctx context.Context, username, password string) (*entity.User, error) {
 	user, err := uc.repo.FindByUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %w", err)
@@ -73,7 +71,7 @@ func (uc *UseCase) Login(ctx context.Context, username, password string) (*entit
 	return user, nil
 }
 
-func (uc *UseCase) GetProfile(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
+func (uc *useCase) GetProfile(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
 	user, err := uc.repo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
@@ -85,7 +83,7 @@ func (uc *UseCase) GetProfile(ctx context.Context, userID uuid.UUID) (*entity.Us
 	return user, nil
 }
 
-func (uc *UseCase) UpdateProfile(ctx context.Context, user *entity.User) error {
+func (uc *useCase) UpdateProfile(ctx context.Context, user *entity.User) error {
 	// Check if user exists
 	existing, err := uc.repo.FindByID(ctx, user.ID)
 	if err != nil {

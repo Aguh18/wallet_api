@@ -7,42 +7,33 @@ import (
 	"wallet_api/internal/common/consts"
 	"wallet_api/internal/common/errors"
 	"wallet_api/internal/entity"
+	"wallet_api/internal/module/account/repository"
 
 	"github.com/google/uuid"
 )
 
-type UseCase struct {
-	accountRepo interface {
-		Create(ctx context.Context, account *entity.Account) error
-		FindByID(ctx context.Context, id uuid.UUID) (*entity.Account, error)
-		FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error)
-		Update(ctx context.Context, account *entity.Account) error
-	}
-	transactionRepo interface {
-		Create(ctx context.Context, transaction *entity.Transaction) error
-		FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
-	}
+type UseCase interface {
+	CreateAccount(ctx context.Context, userID uuid.UUID, accountName, currency string) (*entity.Account, error)
+	GetAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error)
+	GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error)
+	Deposit(ctx context.Context, accountID uuid.UUID, amount int64, description string) error
+	Withdraw(ctx context.Context, accountID uuid.UUID, amount int64, description string) error
+	GetTransactions(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
 }
 
-func New(
-	accountRepo interface {
-		Create(ctx context.Context, account *entity.Account) error
-		FindByID(ctx context.Context, id uuid.UUID) (*entity.Account, error)
-		FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error)
-		Update(ctx context.Context, account *entity.Account) error
-	},
-	transactionRepo interface {
-		Create(ctx context.Context, transaction *entity.Transaction) error
-		FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
-	},
-) *UseCase {
-	return &UseCase{
+type useCase struct {
+	accountRepo     repository.AccountRepository
+	transactionRepo repository.TransactionRepository
+}
+
+func New(accountRepo repository.AccountRepository, transactionRepo repository.TransactionRepository) UseCase {
+	return &useCase{
 		accountRepo:     accountRepo,
 		transactionRepo: transactionRepo,
 	}
 }
 
-func (uc *UseCase) CreateAccount(ctx context.Context, userID uuid.UUID, accountName, currency string) (*entity.Account, error) {
+func (uc *useCase) CreateAccount(ctx context.Context, userID uuid.UUID, accountName, currency string) (*entity.Account, error) {
 	account := &entity.Account{
 		UserID:      userID,
 		AccountName: accountName,
@@ -58,7 +49,7 @@ func (uc *UseCase) CreateAccount(ctx context.Context, userID uuid.UUID, accountN
 	return account, nil
 }
 
-func (uc *UseCase) GetAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error) {
+func (uc *useCase) GetAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error) {
 	account, err := uc.accountRepo.FindByID(ctx, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get account: %w", err)
@@ -70,7 +61,7 @@ func (uc *UseCase) GetAccount(ctx context.Context, accountID uuid.UUID) (*entity
 	return account, nil
 }
 
-func (uc *UseCase) GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error) {
+func (uc *useCase) GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error) {
 	accounts, err := uc.accountRepo.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user accounts: %w", err)
@@ -79,7 +70,7 @@ func (uc *UseCase) GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]*en
 	return accounts, nil
 }
 
-func (uc *UseCase) Deposit(ctx context.Context, accountID uuid.UUID, amount int64, description string) error {
+func (uc *useCase) Deposit(ctx context.Context, accountID uuid.UUID, amount int64, description string) error {
 	if amount <= 0 {
 		return errors.ErrBadRequest
 	}
@@ -117,7 +108,7 @@ func (uc *UseCase) Deposit(ctx context.Context, accountID uuid.UUID, amount int6
 	return nil
 }
 
-func (uc *UseCase) Withdraw(ctx context.Context, accountID uuid.UUID, amount int64, description string) error {
+func (uc *useCase) Withdraw(ctx context.Context, accountID uuid.UUID, amount int64, description string) error {
 	if amount <= 0 {
 		return errors.ErrBadRequest
 	}
@@ -160,7 +151,7 @@ func (uc *UseCase) Withdraw(ctx context.Context, accountID uuid.UUID, amount int
 	return nil
 }
 
-func (uc *UseCase) GetTransactions(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
+func (uc *useCase) GetTransactions(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
 	transactions, err := uc.transactionRepo.FindByAccountID(ctx, accountID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transactions: %w", err)

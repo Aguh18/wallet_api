@@ -16,12 +16,12 @@ import (
 )
 
 type Handler struct {
-	uc         *usecase.UseCase
+	uc         usecase.UseCase
 	log        logger.Interface
 	jwtManager *utils.JWTManager
 }
 
-func New(uc *usecase.UseCase, log logger.Interface) *Handler {
+func New(uc usecase.UseCase, log logger.Interface) *Handler {
 	return &Handler{
 		uc:         uc,
 		log:        log,

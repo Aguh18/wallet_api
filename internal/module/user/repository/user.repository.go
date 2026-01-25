@@ -7,23 +7,30 @@ import (
 	"wallet_api/internal/common/base"
 	"wallet_api/internal/entity"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type UserRepository struct {
-	*base.BaseRepository[entity.User] // Embed base (exposes all base methods!)
-	db                                *gorm.DB
+type UserRepository interface {
+	Create(ctx context.Context, user *entity.User) error
+	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
+	FindByUsername(ctx context.Context, username string) (*entity.User, error)
+	Update(ctx context.Context, user *entity.User) error
 }
 
-func New(db *gorm.DB) *UserRepository {
-	return &UserRepository{
+type userRepository struct {
+	*base.BaseRepository[entity.User]
+	db *gorm.DB
+}
+
+func New(db *gorm.DB) UserRepository {
+	return &userRepository{
 		BaseRepository: base.NewBaseRepository[entity.User](db),
 		db:             db,
 	}
 }
 
-
-func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*entity.User, error) {
+func (r *userRepository) FindByUsername(ctx context.Context, username string) (*entity.User, error) {
 	var user entity.User
 	err := r.db.WithContext(ctx).Where("username = ?", username).First(&user).Error
 	if err != nil {

@@ -10,19 +10,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type TransactionRepository struct {
+type TransactionRepository interface {
+	Create(ctx context.Context, transaction *entity.Transaction) error
+	FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
+}
+
+type transactionRepository struct {
 	*base.BaseRepository[entity.Transaction]
 }
 
-func NewTransactionRepository(db *gorm.DB) *TransactionRepository {
-	return &TransactionRepository{
+func NewTransactionRepository(db *gorm.DB) TransactionRepository {
+	return &transactionRepository{
 		BaseRepository: base.NewBaseRepository[entity.Transaction](db),
 	}
 }
 
-
-func (r *TransactionRepository) FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
-	// Gunakan QueryBuilder
+func (r *transactionRepository) FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
 	return r.NewQueryBuilder().
 		Where("account_id", accountID).
 		Preload("Account").

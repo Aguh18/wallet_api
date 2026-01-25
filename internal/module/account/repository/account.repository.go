@@ -10,19 +10,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type AccountRepository struct {
-	*base.BaseRepository[entity.Account] // Embed untuk Account (exposes base methods)
+type AccountRepository interface {
+	Create(ctx context.Context, account *entity.Account) error
+	FindByID(ctx context.Context, id uuid.UUID) (*entity.Account, error)
+	FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error)
+	Update(ctx context.Context, account *entity.Account) error
 }
 
-func New(db *gorm.DB) *AccountRepository {
-	return &AccountRepository{
+type accountRepository struct {
+	*base.BaseRepository[entity.Account]
+}
+
+func New(db *gorm.DB) AccountRepository {
+	return &accountRepository{
 		BaseRepository: base.NewBaseRepository[entity.Account](db),
 	}
 }
 
-
-func (r *AccountRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error) {
-	// Gunakan QueryBuilder dari base repo
+func (r *accountRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error) {
 	return r.NewQueryBuilder().
 		Where("user_id", userID).
 		Find(ctx)

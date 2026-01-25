@@ -10,7 +10,7 @@ import (
 )
 
 type Module struct {
-	UseCase *usecase.UseCase
+	UseCase usecase.UseCase
 	Handler *handler.Handler
 }
 

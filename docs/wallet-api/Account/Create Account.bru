@@ -1,0 +1,22 @@
+meta {
+  name: "Create Account"
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/v1/accounts
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: access_token={{access_token}}; refresh_token={{refresh_token}}
+}
+
+body:json {
+  {
+    "account_name": "My Wallet",
+    "currency": "IDR"
+  }
+}

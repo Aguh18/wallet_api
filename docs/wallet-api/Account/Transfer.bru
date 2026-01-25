@@ -1,0 +1,27 @@
+meta {
+  name: "Transfer"
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{base_url}}/v1/accounts/:id/transfer
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: access_token={{access_token}}; refresh_token={{refresh_token}}
+}
+
+params:path {
+  id: {{from_account_id}}
+}
+
+body:json {
+  {
+    "to_account_id": "{{to_account_id}}",
+    "amount": 25000,
+    "description": "Transfer untuk jajan"
+  }
+}

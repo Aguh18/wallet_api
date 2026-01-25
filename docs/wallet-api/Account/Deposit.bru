@@ -1,0 +1,26 @@
+meta {
+  name: "Deposit"
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/v1/accounts/:id/deposit
+  body: json
+  auth: none
+}
+
+headers {
+  Cookie: access_token={{access_token}}; refresh_token={{refresh_token}}
+}
+
+params:path {
+  id: {{account_id}}
+}
+
+body:json {
+  {
+    "amount": 100000,
+    "description": "Initial deposit"
+  }
+}

@@ -1,0 +1,15 @@
+meta {
+  name: "Get User Accounts"
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/v1/accounts
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: access_token={{access_token}}; refresh_token={{refresh_token}}
+}

@@ -104,10 +104,14 @@ docker-compose.override.yml
 # ========================================
 # Documentation
 # ========================================
-# Ignore all documentation except README.md
+# Keep Bruno collections and ERD
+!docs/wallet-api/
+!docs/images/
+
+# Ignore other markdown files except README.md
 *.md
 !README.md
-docs/
+!docs/wallet-api/README.md
 
 # ========================================
 # Other

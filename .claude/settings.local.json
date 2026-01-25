@@ -25,7 +25,9 @@
       "Bash(curl:*)",
       "Bash(docker:*)",
       "Bash(docker volume inspect:*)",
-      "Bash(/tmp/go_files.txt)"
+      "Bash(/tmp/go_files.txt)",
+      "Bash(go test:*)",
+      "Bash(git ls-tree:*)"
     ],
     "deny": [],
     "ask": []

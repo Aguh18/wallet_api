@@ -1,12 +1,11 @@
 meta {
-  name: "Get User Accounts"
+  name: "Get Profile"
   type: http
-  seq: 8
+  seq: 3
 }
 
 get {
-  url: {{base_url}}/v1/accounts
-  body: none
+  url: {{base_url}}/v1/users/profile
   auth: none
 }
 

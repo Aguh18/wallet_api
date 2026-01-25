@@ -1,16 +1,17 @@
 meta {
-  name: "Withdraw"
+  name: "Deposit"
   type: http
-  seq: 11
+  seq: 10
 }
 
 post {
-  url: {{base_url}}/v1/accounts/:id/withdraw
+  url: {{base_url}}/v1/accounts/:id/deposit
   body: json
   auth: none
 }
 
 headers {
+  Content-Type: application/json
   Cookie: access_token={{access_token}}; refresh_token={{refresh_token}}
 }
 
@@ -20,7 +21,7 @@ params:path {
 
 body:json {
   {
-    "amount": 50000,
-    "description": "ATM Withdrawal"
+    "amount": 100000,
+    "description": "Initial deposit"
   }
 }

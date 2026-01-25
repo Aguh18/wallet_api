@@ -1,13 +1,17 @@
 meta {
-  name: "Register"
+  name: "Login"
   type: http
-  seq: 1
+  seq: 2
 }
 
 post {
-  url: {{base_url}}/v1/auth/register
+  url: {{base_url}}/v1/auth/login
   body: json
   auth: none
+}
+
+headers {
+  Content-Type: application/json
 }
 
 body:json {

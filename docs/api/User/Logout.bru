@@ -1,12 +1,11 @@
 meta {
-  name: "Get Profile"
+  name: "Logout"
   type: http
-  seq: 3
+  seq: 5
 }
 
-get {
-  url: {{base_url}}/v1/auth/profile
-  body: none
+post {
+  url: {{base_url}}/v1/auth/logout
   auth: none
 }
 

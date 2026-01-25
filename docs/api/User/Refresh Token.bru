@@ -1,0 +1,14 @@
+meta {
+  name: "Refresh Token"
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/v1/auth/refresh
+  auth: none
+}
+
+headers {
+  Cookie: refresh_token={{refresh_token}}
+}

@@ -2,11 +2,11 @@
 
 Simple REST API wallet service built with Go and Clean Architecture principles.
 
-[![Bruno Collection](https://img.shields.io/badge/API_Testing-Browser-blue?logo=usebruno)](docs/wallet-api/)
+[![Bruno Collection](https://img.shields.io/badge/API_Testing-Browser-blue?logo=usebruno)](docs/api/)
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> **🚀 Quick Start**: [Bruno API Collection](docs/wallet-api/) available for testing all endpoints!
+> **🚀 Quick Start**: [Bruno API Collection](docs/api/) available for testing all endpoints!
 
 ## Features
 
@@ -29,12 +29,6 @@ Simple REST API wallet service built with Go and Clean Architecture principles.
   - Idempotency support with reference ID
   - Pessimistic locking (SELECT FOR UPDATE) to prevent race conditions
   - Atomic transactions for data consistency
-
-- **API Testing**
-  - 📦 Complete [Bruno Collection](docs/wallet-api/) included
-  - Ready-to-use API requests for all endpoints
-  - Auto authentication handling
-  - Perfect for integration testing
 
 - **Security**
   - Cookie-based authentication (HttpOnly, Secure, SameSite)
@@ -143,7 +137,7 @@ wallet_api/
 **Don't want to code? Test all endpoints immediately!**
 
 1. Install [Bruno](https://www.usebruno.com/) (open-source API client)
-2. Download [Bruno Collection](docs/wallet-api/)
+2. Download [Bruno Collection](docs/api/)
 3. Import and start testing all endpoints with one click
 
 ```bash
@@ -155,7 +149,7 @@ wallet_api/
 - ✅ Auto cookie handling for auth
 ```
 
-[📖 Full Bruno Documentation](docs/wallet-api/README.md) | [⬇️ Import Collection](docs/wallet-api/)
+[📖 Full Bruno Documentation](docs/api/README.md) | [⬇️ Import Collection](docs/api/)
 
 ### Prerequisites
 
@@ -455,101 +449,3 @@ All API responses follow this format:
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
-
-## API Testing with Bruno
-
-> **💡 Pro Tip**: Use Bruno to test all endpoints without writing any code! Perfect for:
-> - Quick API verification
-> - Integration testing
-> - Demonstrating API functionality
-> - Debugging requests/responses
-
-Bruno collection is available in `docs/wallet-api/` for testing all endpoints.
-
-### Why Bruno?
-
-- ✅ **Open-source** and lightweight alternative to Postman
-- ✅ **Git-friendly** - stores requests as plain text files
-- ✅ **No account needed** - works offline
-- ✅ **Auto cookie handling** - manages authentication automatically
-
-### Import Collection
-
-1. Install Bruno from https://www.usebruno.com/
-2. Open Bruno and click "Import Collection"
-3. Select the `docs/wallet-api` folder
-4. All endpoints will be imported automatically
-
-### Collection Structure
-
-```
-docs/wallet-api/
-├── Collection.bru          # Main collection file
-├── Env-Local.bru           # Environment variables
-├── User/                   # User endpoints
-│   ├── Register.bru
-│   ├── Login.bru
-│   ├── Get Profile.bru
-│   ├── Update Profile.bru
-│   ├── Logout.bru
-│   └── Refresh Token.bru
-└── Account/                # Account endpoints
-    ├── Create Account.bru
-    ├── Get Account.bru
-    ├── Get User Accounts.bru
-    ├── Deposit.bru
-    ├── Withdraw.bru
-    ├── Transfer.bru
-    └── Get Transactions.bru
-```
-
-### Testing Flow
-
-1. **Register** new user or **Login** with existing credentials
-2. Use returned cookies for authentication in subsequent requests
-3. **Create Account** to get an account ID
-4. **Deposit** funds to your account
-5. **Transfer** funds to another account (requires 2 accounts)
-6. **Get Transactions** to view transaction history
-
-### Environment Variables
-
-Edit `Env-Local.bru` to match your setup:
-```javascript
-vars {
-  base_url: http://127.0.0.1:8080  // Change if running on different port
-}
-```
-
-### Authentication Flow
-
-Bruno automatically handles cookies:
-- **Login** request extracts `access_token` and `refresh_token` from cookies
-- These tokens are stored as variables and used in subsequent requests
-- All authenticated requests include these cookies automatically
-
-### Testing Concurrent Requests (Race Condition Test)
-
-Use Bruno's "Runner" feature to test pessimistic locking:
-
-```bash
-1. Open Bruno Runner
-2. Select "Deposit" or "Transfer" requests
-3. Run 3-5 instances simultaneously
-4. Verify: final balance = initial + (amount × number of successful requests)
-```
-
-This demonstrates the SELECT FOR UPDATE locking preventing double-spending.
-
-### Quick Reference
-
-| Task | Request File |
-|------|--------------|
-| Create user | `User/Register.bru` |
-| Login | `User/Login.bru` |
-| Create account | `Account/Create Account.bru` |
-| Add funds | `Account/Deposit.bru` |
-| Transfer | `Account/Transfer.bru` |
-| View history | `Account/Get Transactions.bru` |
-
-[⬆️ Back to Top](#wallet-api)

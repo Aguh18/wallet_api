@@ -43,6 +43,7 @@ Simple REST API wallet service built with Go and Clean Architecture principles.
   - Interface-based dependency injection
   - Generic base repository pattern
   - Request/Response DTOs
+  - Bruno API collection for testing
 
 ## Tech Stack
 
@@ -132,63 +133,37 @@ wallet_api/
 
 ## Quick Start
 
-### 🎯 Test API with Bruno (Fastest Way)
+### Test API with Bruno
 
-**Don't want to code? Test all endpoints immediately!**
+Don't want to code? Test all endpoints immediately!
 
-1. Install [Bruno](https://www.usebruno.com/) (open-source API client)
-2. Download [Bruno Collection](docs/api/)
-3. Import and start testing all endpoints with one click
+1. Install [Bruno](https://www.usebruno.com/)
+2. Import [Bruno Collection](docs/api/)
+3. Start testing all endpoints
 
-```bash
-# The collection includes:
-- ✅ User authentication (register, login, logout)
-- ✅ Account management (create, view accounts)
-- ✅ Transactions (deposit, withdraw, transfer)
-- ✅ Transaction history
-- ✅ Auto cookie handling for auth
-```
+[📖 Full Documentation](docs/api/README.md)
 
-[📖 Full Bruno Documentation](docs/api/README.md) | [⬇️ Import Collection](docs/api/)
+### Run the Application
 
-### Prerequisites
-
-- Go 1.25 or higher
-- Docker and Docker Compose
-- Make (optional)
-
-### Using Docker Compose (Recommended)
+**Using Docker Compose (Recommended)**
 
 ```bash
-# Start all services (PostgreSQL + App)
 make compose-up
-
-# The app will be available at http://localhost:8000
+# App available at http://localhost:8000
 ```
 
-### Manual Setup
+**Manual Setup**
 
 ```bash
-# Install dependencies
 go mod download
-
-# Copy environment variables (optional, defaults are in docker-compose.yml)
-cp .env.example .env
-
-# Run migrations
 make migrate-up
-
-# Run the application
 make run
 ```
 
-### Using Air (Hot Reload)
+**Hot Reload (Development)**
 
 ```bash
-# Install Air
 go install github.com/cosmtrek/air@latest
-
-# Run with hot reload
 air
 ```
 
@@ -248,57 +223,6 @@ air
 
 ![Database ERD](docs/images/erd.png)
 
-### Users Table
-```sql
-- id (UUID, primary key)
-- username (string, unique, not null)
-- password_hash (string, not null)
-- created_at (timestamp)
-```
-
-### Accounts Table
-```sql
-- id (UUID, primary key)
-- user_id (UUID, foreign key)
-- account_name (string)
-- currency (string, default: IDR)
-- balance (bigint, default: 0)
-- status (string, default: active)
-- created_at (timestamp)
-- updated_at (timestamp)
-```
-
-### Transactions Table
-```sql
-- id (UUID, primary key)
-- account_id (UUID, foreign key)
-- reference_id (string, unique)
-- type (string: deposit/withdrawal/transfer)
-- amount (bigint)
-- balance_before (bigint)
-- balance_after (bigint)
-- description (text)
-- created_at (timestamp)
-```
-
-### Sessions Table
-```sql
-- id (UUID, primary key)
-- user_id (UUID, foreign key)
-- refresh_token_hash (string)
-- expires_at (timestamp)
-- created_at (timestamp)
-```
-
-### Access Tokens Table
-```sql
-- id (UUID, primary key)
-- user_id (UUID, foreign key)
-- token_hash (string)
-- expires_at (timestamp)
-- created_at (timestamp)
-```
-
 ## Make Commands
 
 ```bash
@@ -337,52 +261,11 @@ go test -cover ./...
 go test -race ./...
 ```
 
-### Creating New Migration
-
-```bash
-# Create new migration file
-make migrate-create NAME=add_users_table
-
-# This creates:
-# migrations/000001_add_users_table.up.sql
-# migrations/000001_add_users_table.down.sql
-```
-
-### Hot Reload Development
-
-```bash
-# Install Air
-go install github.com/cosmtrek/air@latest
-
-# Run with hot reload (uses .air.toml config)
-air
-```
-
-## Docker
-
-### Building Docker Image
-
-```bash
-docker build -t wallet-api:latest .
-```
-
-### Docker Compose Services
-
-```bash
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-
-# Remove all volumes (WARNING: deletes database data)
-docker-compose down -v
-```
-
 ## Architecture Highlights
+
+### Clean Architecture Diagram
+
+![Clean Architecture](docs/images/cleanArchitect.webp)
 
 ### Clean Architecture Principles
 
@@ -405,18 +288,6 @@ module/
     ├── request/      # Request DTOs
     └── response/     # Response DTOs + mappers
 ```
-
-## Security
-
-- **Password Hashing**: bcrypt with cost 12
-- **JWT Tokens**:
-  - Access token: 15 minutes expiry
-  - Refresh token: 7 days expiry
-- **Cookie Security**:
-  - HttpOnly: Prevents XSS access
-  - Secure: HTTPS only (production)
-  - SameSite: CSRF protection
-- **Input Validation**: Request validation using struct tags
 
 ## Response Format
 
@@ -441,11 +312,3 @@ All API responses follow this format:
   }
 }
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request

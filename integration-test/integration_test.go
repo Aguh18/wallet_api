@@ -148,7 +148,6 @@ func TestHTTPDoTranslateV1(t *testing.T) {
 	}
 }
 
-// HTTP GET: /v1/translation/history.
 func TestHTTPHistoryV1(t *testing.T) {
 	url := basePathV1 + "/translation/history"
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)

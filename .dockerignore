@@ -27,7 +27,6 @@ bin/
 *.exe
 *.test
 *.out
-/app
 
 # Air hot reload
 .air.toml

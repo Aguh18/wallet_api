@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go mod tidy:*)",
+      "Bash(go build:*)",
+      "Bash(go mod download:*)",
+      "Bash(go list:*)",
+      "Bash(cat:*)",
+      "Bash(go get:*)",
+      "Bash(go install:*)",
+      "Bash(make:*)",
+      "Bash(tree:*)",
+      "Bash(gofmt:*)",
+      "Bash(go version:*)",
+      "Bash(go fmt:*)",
+      "Bash(find:*)",
+      "Bash(NAME=create_users_table make:*)",
+      "Bash(NAME=create_accounts_table make:*)",
+      "Bash(NAME=create_transactions_table make migrate-create)",
+      "Bash(NAME=create_sessions_table make migrate-create)",
+      "Bash(NAME=create_access_tokens_table make:*)",
+      "Bash(docker build:*)",
+      "Bash(docker inspect:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl:*)",
+      "Bash(docker:*)",
+      "Bash(docker volume inspect:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

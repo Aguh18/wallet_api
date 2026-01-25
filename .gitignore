@@ -1,0 +1,116 @@
+# ========================================
+# IDE & Editor
+# ========================================
+.idea
+.vscode
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ========================================
+# Environment & Secrets (IMPORTANT!)
+# ========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+credentials.json
+config/secrets/
+
+# ========================================
+# Build & Binaries
+# ========================================
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+build/
+
+# Project-specific binaries
+app
+seed
+/main
+
+# Test binaries
+*.test
+
+# Go coverage
+*.out
+coverage.txt
+coverage.html
+coverage.out
+
+# ========================================
+# Dependencies
+# ========================================
+vendor/
+
+# ========================================
+# Temporary Files
+# ========================================
+tmp/
+tmp-*/
+*.log
+logs/
+*.tmp
+*.cache
+build-errors.log
+
+# ========================================
+# Air (Hot Reload)
+# ========================================
+.air.toml
+tmp/
+
+# ========================================
+# Database
+# ========================================
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# ========================================
+# OS Files
+# ========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
+# ========================================
+# Docker & Volumes
+# ========================================
+docker-compose.override.yml
+
+# ========================================
+# Documentation (Optional)
+# ========================================
+# Uncomment if you don't want to push docs
+# *.md
+# docs/
+
+# ========================================
+# Other
+# ========================================
+.pm2
+.nyc_output
+.cache/

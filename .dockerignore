@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+README.md
+*.md
+LICENSE
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# IDE & Editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Build artifacts
+tmp/
+dist/
+bin/
+*.exe
+*.test
+*.out
+/app
+
+# Air hot reload
+.air.toml
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.example
+
+# Test files
+*_test.go
+coverage.out
+coverage.html
+coverage.txt
+
+# CI/CD
+.golangci.yml
+
+# Documentation (if any)
+docs/
+nginx/

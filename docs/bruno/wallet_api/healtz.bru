@@ -1,0 +1,16 @@
+meta {
+  name: healtz
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/healthz
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

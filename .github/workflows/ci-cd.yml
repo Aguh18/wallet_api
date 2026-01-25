@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
+      - name: Set GOTOOLCHAIN to avoid covdata issue
+        run: go env -w GOTOOLCHAIN=go1.23.0+auto
+
       - name: Run tests
         env:
           PG_URL: postgres://wallet_user:wallet_password@localhost:5432/wallet_db?sslmode=disable

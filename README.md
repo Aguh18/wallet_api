@@ -250,7 +250,7 @@ make dev
 
 ### Entity Relationship Diagram
 
-![Database ERD](docs/images/erddg)
+![Database ERD](docs/images/erdd.png)
 
 ## Perintah Make
 

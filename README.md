@@ -390,47 +390,43 @@ Untuk testing API manual, gunakan:
 
 ## DevOps & Deployment
 
-Setup DevOps lengkap untuk production deployment tersedia di direktori `/devops-challenge`:
-
 ### 🐳 Docker & Docker Compose
-- Multi-stage Dockerfile untuk image production yang optimal
-- Docker Compose untuk local development dan testing
-- Health checks dan security best practices
+- Multi-stage Dockerfile untuk production
+- Docker Compose untuk local development
+- Health checks & security best practices
+
+```bash
+# Local development
+make compose-up-all
+```
 
 ### ☸️ Kubernetes Deployment
-- Complete K8s manifests (Deployment, Service, Ingress, HPA)
-- ConfigMap untuk configuration management
-- Secrets untuk sensitive data (DB credentials, JWT secret)
-- PostgreSQL StatefulSet dengan persistent storage
-- Horizontal Pod Autoscaler (3-10 replicas)
-- Script auto-deployment
+Complete K8s manifests di folder `k8s/`:
+
+- namespace.yaml - Namespace isolation
+- configmap.yaml - Configuration management
+- secret.yaml - Sensitive credentials
+- postgres.yaml - PostgreSQL StatefulSet dengan persistent volume
+- deployment.yaml - Application deployment (3 replicas, rolling updates)
+- service.yaml - ClusterIP & LoadBalancer services
+- ingress.yaml - Nginx ingress with SSL/TLS
+- hpa.yaml - Horizontal Pod Autoscaler (3-10 pods)
+
+```bash
+# Deploy semua
+kubectl apply -f k8s/
+
+# Check status
+kubectl get all -n wallet
+
+# Port forward untuk testing
+kubectl port-forward -n wallet svc/wallet-api-service 8080:80
+```
+
+[📖 Lihat dokumentasi lengkap K8s](k8s/README.md)
 
 ### 🔄 CI/CD Pipeline (GitHub Actions)
 - Automated testing dengan PostgreSQL service
-- Build & push Docker image ke GHCR
+- Build & push Docker image ke registry
 - Coverage reporting
-- Automatic deployment ke Kubernetes (optional)
-
-### 📚 Dokumentasi Lengkap
-Lihat dokumentasi lengkap di:
-- [DevOps Challenge README](devops-challenge/README.md) - Panduan deployment lengkap
-- [File Organization](devops-challenge/FILE_ORGANIZATION.md) - Penjelasan struktur file
-
-### Quick Deploy
-
-```bash
-# Local dengan Docker Compose
-cd devops-challenge
-docker-compose up -d
-
-# Deploy ke Kubernetes
-cd devops-challenge/k8s
-./deploy.sh
-```
-
-**Deployment Pipeline:**
-1. ✅ Push code ke GitHub
-2. ✅ GitHub Actions run tests
-3. ✅ Build Docker image (jika tests pass)
-4. ✅ Push ke GitHub Container Registry
-5. ✅ Deploy ke Kubernetes cluster (optional)
+- Automatic deployment (optional)

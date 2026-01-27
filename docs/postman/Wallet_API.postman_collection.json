@@ -1,0 +1,418 @@
+{
+  "info": {
+    "name": "Wallet API",
+    "description": "API Collection for Wallet Application - Full testing suite with authentication, wallet management, and transactions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "wallet_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "to_wallet_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 or 409\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success field\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "auth", "register"]
+            },
+            "description": "Register new user with email"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains tokens\", function () {",
+                  "    pm.expect(pm.response.headers.get('Set-Cookie')).to.include('access_token');",
+                  "    pm.expect(pm.response.headers.get('Set-Cookie')).to.include('refresh_token');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "auth", "login"]
+            },
+            "description": "Login and get auth cookies"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "users", "profile"]
+            },
+            "description": "Get current user profile with email"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"updateduser\",\n  \"email\": \"updateduser@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/users/profile",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "users", "profile"]
+            },
+            "description": "Update user profile (username and email)"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "auth", "logout"]
+            },
+            "description": "Logout user"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Create Wallet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has wallet ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.collectionVariables.set('wallet_id', jsonData.data.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wallet_name\": \"My Wallet\",\n  \"currency\": \"IDR\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/wallets",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "wallets"]
+            },
+            "description": "Create new wallet with wallet_name"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Wallets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/wallets",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "wallets"]
+            },
+            "description": "Get all user wallets"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Wallet by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/wallets/:id",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "wallets", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{wallet_id}}"
+                }
+              ]
+            },
+            "description": "Get wallet details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Deposit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"100000.50\",\n  \"description\": \"Initial deposit\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/wallets/:id/deposit",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "wallets", ":id", "deposit"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{wallet_id}}"
+                }
+              ]
+            },
+            "description": "Deposit to wallet (amount as string with decimal precision)"
+          },
+          "response": []
+        },
+        {
+          "name": "Withdraw",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"50000.25\",\n  \"description\": \"ATM Withdrawal\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/wallets/:id/withdraw",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "wallets", ":id", "withdraw"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{wallet_id}}"
+                }
+              ]
+            },
+            "description": "Withdraw from wallet (amount as string)"
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to_wallet_id\": \"{{to_wallet_id}}\",\n  \"amount\": \"25000.75\",\n  \"description\": \"Transfer for snacks\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/wallets/:id/transfer",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "wallets", ":id", "transfer"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{wallet_id}}"
+                }
+              ]
+            },
+            "description": "Transfer to another wallet (amount as string)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "access_token={{access_token}}; refresh_token={{refresh_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/wallets/:id/transactions?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "wallets", ":id", "transactions"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{wallet_id}}"
+                }
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get wallet transactions with pagination"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

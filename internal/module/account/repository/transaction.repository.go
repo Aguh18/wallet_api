@@ -12,7 +12,7 @@ import (
 
 type TransactionRepository interface {
 	Create(ctx context.Context, transaction *entity.Transaction) error
-	FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
+	FindByWalletID(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
 }
 
 type transactionRepository struct {
@@ -25,10 +25,10 @@ func NewTransactionRepository(db *gorm.DB) TransactionRepository {
 	}
 }
 
-func (r *transactionRepository) FindByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
+func (r *transactionRepository) FindByWalletID(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
 	return r.NewQueryBuilder().
-		Where("account_id", accountID).
-		Preload("Account").
+		Where("wallet_id", walletID).
+		Preload("Wallet").
 		OrderBy("created_at DESC").
 		Limit(limit).
 		Offset(offset).

@@ -1,11 +1,11 @@
 meta {
-  name: "Get Account"
+  name: "Get Transactions"
   type: http
-  seq: 9
+  seq: 13
 }
 
 get {
-  url: {{base_url}}/v1/accounts/:id
+  url: {{base_url}}/v1/wallets/:id/transactions
   auth: none
 }
 
@@ -14,5 +14,10 @@ headers {
 }
 
 params:path {
-  id: {{account_id}}
+  id: {{wallet_id}}
+}
+
+query {
+  limit: 10
+  offset: 0
 }

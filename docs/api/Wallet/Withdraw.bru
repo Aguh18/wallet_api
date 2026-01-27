@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{base_url}}/v1/accounts/:id/withdraw
+  url: {{base_url}}/v1/wallets/:id/withdraw
   body: json
   auth: none
 }
@@ -16,12 +16,12 @@ headers {
 }
 
 params:path {
-  id: {{account_id}}
+  id: {{wallet_id}}
 }
 
 body:json {
   {
-    "amount": 50000,
+    "amount": "50000.25",
     "description": "ATM Withdrawal"
   }
 }

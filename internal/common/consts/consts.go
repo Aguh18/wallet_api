@@ -6,9 +6,9 @@ const (
 )
 
 const (
-	AccountStatusActive   = "active"
-	AccountStatusInactive = "inactive"
-	AccountStatusFrozen   = "frozen"
+	WalletStatusActive   = "active"
+	WalletStatusInactive = "inactive"
+	WalletStatusFrozen   = "frozen"
 )
 
 const (

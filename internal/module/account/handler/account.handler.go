@@ -8,6 +8,7 @@ import (
 	"wallet_api/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/gofiber/fiber/v2"
+	"github.com/shopspring/decimal"
 )
 
 type Handler struct {
@@ -30,48 +31,48 @@ func (h *Handler) CreateAccount(c *fiber.Ctx) error {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
 
-	account, err := h.uc.CreateAccount(c.Context(), userID, req.AccountName, req.Currency)
+	wallet, err := h.uc.CreateWallet(c.Context(), userID, req.AccountName, req.Currency)
 	if err != nil {
-		h.log.Error("failed to create account: %v", err)
-		return c.Status(500).JSON(response.Error(500, "Failed to create account"))
+		h.log.Error("failed to create wallet: %v", err)
+		return c.Status(500).JSON(response.Error(500, "Failed to create wallet"))
 	}
 
-	return c.JSON(response.Success(resp.ToAccountDto(account), "Account created successfully"))
+	return c.JSON(response.Success(resp.ToWalletDto(wallet), "Wallet created successfully"))
 }
 
 func (h *Handler) GetAccount(c *fiber.Ctx) error {
 	idParam := c.Params("id")
-	accountID, err := uuid.Parse(idParam)
+	walletID, err := uuid.Parse(idParam)
 	if err != nil {
-		return c.Status(400).JSON(response.Error(400, "Invalid account ID"))
+		return c.Status(400).JSON(response.Error(400, "Invalid wallet ID"))
 	}
 
-	account, err := h.uc.GetAccount(c.Context(), accountID)
+	wallet, err := h.uc.GetWallet(c.Context(), walletID)
 	if err != nil {
-		h.log.Error("failed to get account: %v", err)
-		return c.Status(404).JSON(response.Error(404, "Account not found"))
+		h.log.Error("failed to get wallet: %v", err)
+		return c.Status(404).JSON(response.Error(404, "Wallet not found"))
 	}
 
-	return c.JSON(response.Success(resp.ToAccountDto(account), "Account retrieved"))
+	return c.JSON(response.Success(resp.ToWalletDto(wallet), "Wallet retrieved"))
 }
 
 func (h *Handler) GetUserAccounts(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
 
-	accounts, err := h.uc.GetUserAccounts(c.Context(), userID)
+	wallets, err := h.uc.GetUserWallets(c.Context(), userID)
 	if err != nil {
-		h.log.Error("failed to get user accounts: %v", err)
-		return c.Status(500).JSON(response.Error(500, "Failed to get accounts"))
+		h.log.Error("failed to get user wallets: %v", err)
+		return c.Status(500).JSON(response.Error(500, "Failed to get wallets"))
 	}
 
-	return c.JSON(response.Success(resp.ToAccountDtos(accounts), "Accounts retrieved"))
+	return c.JSON(response.Success(resp.ToWalletDtos(wallets), "Wallets retrieved"))
 }
 
 func (h *Handler) Deposit(c *fiber.Ctx) error {
 	idParam := c.Params("id")
-	accountID, err := uuid.Parse(idParam)
+	walletID, err := uuid.Parse(idParam)
 	if err != nil {
-		return c.Status(400).JSON(response.Error(400, "Invalid account ID"))
+		return c.Status(400).JSON(response.Error(400, "Invalid wallet ID"))
 	}
 
 	req := new(request.TransactionRequest)
@@ -79,7 +80,13 @@ func (h *Handler) Deposit(c *fiber.Ctx) error {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
 
-	if err := h.uc.Deposit(c.Context(), accountID, req.Amount, req.Description); err != nil {
+	// Parse amount string to decimal
+	amount, err := decimal.NewFromString(req.Amount)
+	if err != nil {
+		return c.Status(400).JSON(response.Error(400, "Invalid amount format"))
+	}
+
+	if err := h.uc.Deposit(c.Context(), walletID, amount, req.Description); err != nil {
 		h.log.Error("failed to deposit: %v", err)
 		return c.Status(400).JSON(response.Error(400, err.Error()))
 	}
@@ -89,9 +96,9 @@ func (h *Handler) Deposit(c *fiber.Ctx) error {
 
 func (h *Handler) Withdraw(c *fiber.Ctx) error {
 	idParam := c.Params("id")
-	accountID, err := uuid.Parse(idParam)
+	walletID, err := uuid.Parse(idParam)
 	if err != nil {
-		return c.Status(400).JSON(response.Error(400, "Invalid account ID"))
+		return c.Status(400).JSON(response.Error(400, "Invalid wallet ID"))
 	}
 
 	req := new(request.TransactionRequest)
@@ -99,7 +106,13 @@ func (h *Handler) Withdraw(c *fiber.Ctx) error {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
 
-	if err := h.uc.Withdraw(c.Context(), accountID, req.Amount, req.Description); err != nil {
+	// Parse amount string to decimal
+	amount, err := decimal.NewFromString(req.Amount)
+	if err != nil {
+		return c.Status(400).JSON(response.Error(400, "Invalid amount format"))
+	}
+
+	if err := h.uc.Withdraw(c.Context(), walletID, amount, req.Description); err != nil {
 		h.log.Error("failed to withdraw: %v", err)
 		return c.Status(400).JSON(response.Error(400, err.Error()))
 	}
@@ -109,9 +122,9 @@ func (h *Handler) Withdraw(c *fiber.Ctx) error {
 
 func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 	idParam := c.Params("id")
-	accountID, err := uuid.Parse(idParam)
+	walletID, err := uuid.Parse(idParam)
 	if err != nil {
-		return c.Status(400).JSON(response.Error(400, "Invalid account ID"))
+		return c.Status(400).JSON(response.Error(400, "Invalid wallet ID"))
 	}
 
 	limit := 10
@@ -124,7 +137,7 @@ func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 		offset = o
 	}
 
-	transactions, err := h.uc.GetTransactions(c.Context(), accountID, limit, offset)
+	transactions, err := h.uc.GetTransactions(c.Context(), walletID, limit, offset)
 	if err != nil {
 		h.log.Error("failed to get transactions: %v", err)
 		return c.Status(500).JSON(response.Error(500, "Failed to get transactions"))
@@ -134,10 +147,10 @@ func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 }
 
 func (h *Handler) Transfer(c *fiber.Ctx) error {
-	fromAccountIDParam := c.Params("id")
-	fromAccountID, err := uuid.Parse(fromAccountIDParam)
+	fromWalletIDParam := c.Params("id")
+	fromWalletID, err := uuid.Parse(fromWalletIDParam)
 	if err != nil {
-		return c.Status(400).JSON(response.Error(400, "Invalid from account ID"))
+		return c.Status(400).JSON(response.Error(400, "Invalid from wallet ID"))
 	}
 
 	req := new(request.TransferRequest)
@@ -145,12 +158,18 @@ func (h *Handler) Transfer(c *fiber.Ctx) error {
 		return c.Status(400).JSON(response.Error(400, "Invalid request body"))
 	}
 
-	toAccountID, err := uuid.Parse(req.ToAccountID)
+	toWalletID, err := uuid.Parse(req.ToWalletID)
 	if err != nil {
-		return c.Status(400).JSON(response.Error(400, "Invalid to account ID"))
+		return c.Status(400).JSON(response.Error(400, "Invalid to wallet ID"))
 	}
 
-	if err := h.uc.Transfer(c.Context(), fromAccountID, toAccountID, req.Amount, req.Description); err != nil {
+	// Parse amount string to decimal
+	amount, err := decimal.NewFromString(req.Amount)
+	if err != nil {
+		return c.Status(400).JSON(response.Error(400, "Invalid amount format"))
+	}
+
+	if err := h.uc.Transfer(c.Context(), fromWalletID, toWalletID, amount, req.Description); err != nil {
 		h.log.Error("failed to transfer: %v", err)
 		return c.Status(400).JSON(response.Error(400, err.Error()))
 	}

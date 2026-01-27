@@ -2,11 +2,12 @@
 
 Layanan REST API wallet sederhana yang dibangun dengan Go dan prinsip Clean Architecture.
 
-[![Bruno Collection](https://img.shields.io/badge/API_Testing-Browser-blue?logo=usebruno)](docs/api/)
+[![Bruno Collection](https://img.shields.io/badge/API_Testing-Bruno-blue?logo=usebruno)](docs/api/)
+[![Postman Collection](https://img.shields.io/badge/API_Testing-Postman-orange?logo=postman)](docs/postman/)
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> **🚀 Mulai Cepat**: [Bruno API Collection](docs/api/) tersedia untuk testing semua endpoint!
+> **🚀 Mulai Cepat**: [Bruno](docs/api/) atau [Postman](docs/postman/) collections tersedia untuk testing semua endpoint!
 
 ## Fitur
 
@@ -16,19 +17,21 @@ Layanan REST API wallet sederhana yang dibangun dengan Go dan prinsip Clean Arch
   - Hashing password aman dengan bcrypt
   - Registrasi dan login pengguna
 
-- **Manajemen Akun**
-  - Buat banyak akun per pengguna
-  - Dukungan banyak mata uang
-  - Manajemen status akun (aktif, tidak aktif, dibekukan)
+- **Manajemen Wallet**
+  - Buat banyak wallet per pengguna
+  - Dukungan banyak mata uang (IDR, USD, dll)
+  - Manajemen status wallet (aktif, tidak aktif, dibekukan)
+  - Presisi monetik menggunakan NUMERIC(20,2) dan decimal library
 
 - **Pemrosesan Transaksi**
-  - Setor dan tarik dana
-  - Transfer dana antar akun
+  - Setor dan tarik dana dengan presisi decimal
+  - Transfer dana antar wallet
   - Riwayat transaksi dengan pagination
-  - Pelacakan saldo (sebelum/setelah transaksi)
+  - Pelacakan saldo sebelum/setelah transaksi dengan presisi exact
   - Dukungan idempotensi dengan reference ID
   - Pessimistic locking (SELECT FOR UPDATE) untuk mencegah race conditions
   - Transaksi atomik untuk konsistensi data
+  - Menggunakan shopspring/decimal untuk integritas data keuangan
 
 - **Keamanan**
   - Autentikasi berbasis cookie (HttpOnly, Secure, SameSite)
@@ -44,6 +47,134 @@ Layanan REST API wallet sederhana yang dibangun dengan Go dan prinsip Clean Arch
   - Generic base repository pattern
   - Request/Response DTOs
   - Bruno API collection untuk testing
+  - Postman API collection untuk testing
+
+## 📝 Recent Updates & Breaking Changes
+
+### v1.1.0 - Wallet & Monetary Precision Update (Latest)
+
+**🎉 Major Improvements:**
+- ✨ **Email Support**: User registration sekarang membutuhkan field `email` (unik per user)
+- ✨ **Monetary Precision**: Menggunakan `NUMERIC(20,2)` di database + `shopspring/decimal` di Go untuk presisi exact
+- ✨ **Wallet Naming**: Konsisten menggunakan istilah "Wallet" daripada "Account"
+- ✨ **API Endpoint**: Endpoint berubah dari `/v1/accounts` → `/v1/wallets`
+
+**Breaking Changes:**
+
+| Change | Old | New |
+|--------|-----|-----|
+| **Endpoint** | `/v1/accounts/*` | `/v1/wallets/*` |
+| **Register Request** | `username`, `password` | `username`, `email`, `password` |
+| **Update Profile Request** | `username` | `username`, `email` |
+| **Create Wallet Request** | `account_name` | `wallet_name` |
+| **Amount Type** | `integer` | `string` (dengan presisi desimal) |
+| **Balance Response** | `integer` | `string` (format desimal) |
+| **Transfer Request** | `to_account_id` | `to_wallet_id` |
+
+**API Request Examples:**
+
+**Old Format (v1.0.0):**
+```json
+// Register
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+// Deposit
+{
+  "amount": 100000,
+  "description": "Deposit"
+}
+```
+
+**New Format (v1.1.0):**
+```json
+// Register
+{
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "password": "password123"
+}
+
+// Deposit
+{
+  "amount": "100000.50",
+  "description": "Deposit"
+}
+```
+
+**API Response Examples:**
+
+**Old Format (v1.0.0):**
+```json
+{
+  "balance": 100000
+}
+```
+
+**New Format (v1.1.0):**
+```json
+{
+  "balance": "100000.50"
+}
+```
+
+**Database Changes:**
+- `accounts` table → `wallets` table
+- `account_name` column → `wallet_name` column
+- `transactions.account_id` → `transactions.wallet_id`
+- `balance`, `amount`, `balance_before`, `balance_after` → `NUMERIC(20,2)` (dari `BIGINT`)
+
+**Migration Guide:**
+
+Untuk yang sudah menggunakan API v1.0.0:
+
+1. **Update Request Body**:
+   - Tambahkan `email` saat register
+   - Ubah `amount` dari number ke string
+   - Ubah `account_name` → `wallet_name`
+   - Ubah `to_account_id` → `to_wallet_id`
+
+2. **Update Endpoint URLs**:
+   - Ganti semua `/v1/accounts/` → `/v1/wallets/`
+
+3. **Update Response Parsing**:
+   - `balance`, `amount` sekarang string, bukan number
+   - Parse sebagai string untuk presisi desimal
+
+**Why These Changes?**
+
+- **Email**: Memenuhi standar modern auth dengan email sebagai identifier unik
+- **NUMERIC + Decimal**:
+  - ❌ `BIGINT`/`float64` memiliki precision loss untuk nilai uang
+  - ✅ `NUMERIC(20,2)` + `shopspring/decimal` memberikan presisi exact
+  - Menghindari floating-point errors dalam perhitungan keuangan
+  - Best practice untuk financial applications
+- **Wallet vs Account**: Lebih jelas dan sesuai konteks aplikasi
+- **String Amount**: Client mengirim sebagai string → server parse sebagai decimal → kembali sebagai string. Presisi terjaga!
+
+**Technical Details:**
+
+```go
+// Old: int64 (loss of precision)
+amount := 100000  // 1000.00 will be 1000
+
+// New: decimal.Decimal (exact precision)
+amount := decimal.NewFromString("100000.50")  // Exactly 100000.50
+balance := balance.Add(amount)  // No precision loss!
+```
+
+**Rollback Migration:**
+```bash
+# Jika perlu rollback
+make migrate-down
+```
+
+**New Dependencies:**
+- `github.com/shopspring/decimal` v1.4.0 - Decimal arithmetic for monetary values
+
+---
 
 ## Tech Stack
 
@@ -54,6 +185,7 @@ Layanan REST API wallet sederhana yang dibangun dengan Go dan prinsip Clean Arch
 - **Autentikasi**: JWT (golang-jwt/jwt/v5)
 - **Migrations**: golang-migrate/migrate
 - **Password Hashing**: bcrypt
+- **Decimal Math**: shopspring/decimal (presisi monetik)
 - **Hot Reload**: Air (development)
 - **API Testing**: Bruno collection included
 
@@ -81,7 +213,7 @@ wallet_api/
 │   │       └── response.go          # Helper response API
 │   ├── entity/
 │   │   ├── user.go               # Entity user
-│   │   ├── account.go            # Entity account
+│   │   ├── wallet.go             # Entity wallet
 │   │   ├── transaction.go        # Entity transaction
 │   │   ├── session.go            # Entity session
 │   │   └── access_token.go       # Entity access token
@@ -90,7 +222,7 @@ wallet_api/
 │   │   ├── logger.go             # Logging request HTTP
 │   │   └── recovery.go           # Panic recovery
 │   ├── module/
-│   │   ├── account/              # Module account
+│   │   ├── account/              # Module wallet/akun
 │   │   │   ├── account.module.go
 │   │   │   ├── account.router.go
 │   │   │   ├── handler/
@@ -98,7 +230,7 @@ wallet_api/
 │   │   │   ├── usecase/
 │   │   │   │   └── account.usecase.go
 │   │   │   ├── repository/
-│   │   │   │   ├── account.repository.go
+│   │   │   │   ├── wallet.repository.go
 │   │   │   │   └── transaction.repository.go
 │   │   │   └── dto/
 │   │   │       ├── request/
@@ -152,15 +284,21 @@ wallet_api/
 
 ## Mulai Cepat
 
-### Test API dengan Bruno
+### Test API dengan Bruno atau Postman
 
 Tidak mau coding? Test semua endpoint langsung!
 
+**Opsi 1: Bruno (Recommended)**
 1. Install [Bruno](https://www.usebruno.com/)
 2. Import [Bruno Collection](docs/api/)
 3. Mulai test semua endpoint
+[📖 Dokumentasi Bruno](docs/api/README.md)
 
-[📖 Dokumentasi Lengkap](docs/api/README.md)
+**Opsi 2: Postman**
+1. Install [Postman](https://www.postman.com/downloads/)
+2. Import [Postman Collection](docs/postman/)
+3. Mulai test semua endpoint
+[📖 Dokumentasi Postman](docs/postman/README.md)
 
 ### Jalankan Aplikasi
 
@@ -217,17 +355,17 @@ make dev
 | GET | `/v1/users/profile` | Ambil profil user | Ya |
 | PUT | `/v1/users/profile` | Update profil user | Ya |
 
-### Akun
+### Wallet
 
 | Method | Endpoint | Deskripsi | Auth Required |
 |--------|----------|-----------|---------------|
-| POST | `/v1/accounts` | Buat akun baru | Ya |
-| GET | `/v1/accounts/:id` | Ambil akun berdasarkan ID | Ya |
-| GET | `/v1/accounts` | Ambil semua akun user | Ya |
-| POST | `/v1/accounts/:id/deposit` | Setor ke akun | Ya |
-| POST | `/v1/accounts/:id/withdraw` | Tarik dari akun | Ya |
-| POST | `/v1/accounts/:id/transfer` | Transfer ke akun lain | Ya |
-| GET | `/v1/accounts/:id/transactions` | Ambil transaksi akun | Ya |
+| POST | `/v1/wallets` | Buat wallet baru | Ya |
+| GET | `/v1/wallets/:id` | Ambil wallet berdasarkan ID | Ya |
+| GET | `/v1/wallets` | Ambil semua wallet user | Ya |
+| POST | `/v1/wallets/:id/deposit` | Setor ke wallet | Ya |
+| POST | `/v1/wallets/:id/withdraw` | Tarik dari wallet | Ya |
+| POST | `/v1/wallets/:id/transfer` | Transfer ke wallet lain | Ya |
+| GET | `/v1/wallets/:id/transactions` | Ambil transaksi wallet | Ya |
 
 ### Health Check
 
@@ -361,15 +499,21 @@ make test-race
 go test -v ./...
 ```
 
-### Test dengan Bruno
+### Test dengan Bruno atau Postman
 
-Untuk testing API manual, gunakan [Bruno Collection](docs/api/):
+Untuk testing API manual, gunakan:
 
+**Bruno** (Recommended):
 1. Install [Bruno](https://www.usebruno.com/)
 2. Import collection dari `docs/api/`
 3. Test semua endpoint secara interaktif
+[Lihat Dokumentasi Bruno](docs/api/README.md)
 
-Lihat [Dokumentasi Bruno](docs/api/README.md) untuk instruksi penggunaan detail.
+**Postman**:
+1. Install [Postman](https://www.postman.com/downloads/)
+2. Import collection dari `docs/postman/`
+3. Test semua endpoint dengan auto-variables
+[Lihat Dokumentasi Postman](docs/postman/README.md)
 
 ## DevOps & Deployment
 

@@ -1,17 +1,17 @@
 package request
 
 type CreateAccountRequest struct {
-	AccountName string `json:"account_name" validate:"required"`
+	AccountName string `json:"wallet_name" validate:"required"`
 	Currency    string `json:"currency" validate:"required,default=IDR"`
 }
 
 type TransactionRequest struct {
-	Amount      int64  `json:"amount" validate:"required,gt=0"`
+	Amount      string `json:"amount" validate:"required,gt=0"`
 	Description string `json:"description"`
 }
 
 type TransferRequest struct {
-	ToAccountID string `json:"to_account_id" validate:"required"`
-	Amount      int64  `json:"amount" validate:"required,gt=0"`
+	ToWalletID string `json:"to_wallet_id" validate:"required"`
+	Amount     string `json:"amount" validate:"required,gt=0"`
 	Description string `json:"description"`
 }

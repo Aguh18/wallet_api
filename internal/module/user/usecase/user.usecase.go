@@ -39,6 +39,15 @@ func (uc *useCase) Register(ctx context.Context, user *entity.User) error {
 		return errors.New(409, "Username already registered", nil)
 	}
 
+	// Check if email exists
+	existingEmail, err := uc.repo.FindByEmail(ctx, user.Email)
+	if err != nil {
+		return fmt.Errorf("failed to check existing email: %w", err)
+	}
+	if existingEmail != nil {
+		return errors.New(409, "Email already registered", nil)
+	}
+
 	// Hash password
 	hashedPassword, err := utils.HashPassword(user.PasswordHash)
 	if err != nil {
@@ -91,6 +100,28 @@ func (uc *useCase) UpdateProfile(ctx context.Context, user *entity.User) error {
 	}
 	if existing == nil {
 		return errors.ErrNotFound
+	}
+
+	// Check if username is taken by another user
+	if user.Username != existing.Username {
+		usernameTaken, err := uc.repo.FindByUsername(ctx, user.Username)
+		if err != nil {
+			return fmt.Errorf("failed to check username: %w", err)
+		}
+		if usernameTaken != nil && usernameTaken.ID != user.ID {
+			return errors.New(409, "Username already taken", nil)
+		}
+	}
+
+	// Check if email is taken by another user
+	if user.Email != existing.Email {
+		emailTaken, err := uc.repo.FindByEmail(ctx, user.Email)
+		if err != nil {
+			return fmt.Errorf("failed to check email: %w", err)
+		}
+		if emailTaken != nil && emailTaken.ID != user.ID {
+			return errors.New(409, "Email already taken", nil)
+		}
 	}
 
 	// Update user

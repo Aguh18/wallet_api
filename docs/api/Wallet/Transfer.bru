@@ -1,11 +1,11 @@
 meta {
-  name: "Deposit"
+  name: "Transfer"
   type: http
-  seq: 10
+  seq: 12
 }
 
 post {
-  url: {{base_url}}/v1/accounts/:id/deposit
+  url: {{base_url}}/v1/wallets/:id/transfer
   body: json
   auth: none
 }
@@ -16,12 +16,13 @@ headers {
 }
 
 params:path {
-  id: {{account_id}}
+  id: {{wallet_id}}
 }
 
 body:json {
   {
-    "amount": 100000,
-    "description": "Initial deposit"
+    "to_wallet_id": "{{to_wallet_id}}",
+    "amount": "25000.75",
+    "description": "Transfer untuk jajan"
   }
 }

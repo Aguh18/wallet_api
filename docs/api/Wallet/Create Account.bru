@@ -1,11 +1,11 @@
 meta {
-  name: "Create Account"
+  name: "Create Wallet"
   type: http
   seq: 7
 }
 
 post {
-  url: {{base_url}}/v1/accounts
+  url: {{base_url}}/v1/wallets
   body: json
   auth: none
 }
@@ -17,7 +17,7 @@ headers {
 
 body:json {
   {
-    "account_name": "My Wallet",
+    "wallet_name": "My Wallet",
     "currency": "IDR"
   }
 }

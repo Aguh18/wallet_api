@@ -7,15 +7,15 @@ import (
 )
 
 func (m *Module) RegisterRoutes(app *fiber.App) {
-	accounts := app.Group("/v1/accounts", middleware.JWTAuth())
+	wallets := app.Group("/v1/wallets", middleware.JWTAuth())
 	{
 
-		accounts.Post("/", m.Handler.CreateAccount)
-		accounts.Get("/", m.Handler.GetUserAccounts)
-		accounts.Get("/:id", m.Handler.GetAccount)
-		accounts.Post("/:id/deposit", m.Handler.Deposit)
-		accounts.Post("/:id/withdraw", m.Handler.Withdraw)
-		accounts.Post("/:id/transfer", m.Handler.Transfer)
-		accounts.Get("/:id/transactions", m.Handler.GetTransactions)
+		wallets.Post("/", m.Handler.CreateAccount)
+		wallets.Get("/", m.Handler.GetUserAccounts)
+		wallets.Get("/:id", m.Handler.GetAccount)
+		wallets.Post("/:id/deposit", m.Handler.Deposit)
+		wallets.Post("/:id/withdraw", m.Handler.Withdraw)
+		wallets.Post("/:id/transfer", m.Handler.Transfer)
+		wallets.Get("/:id/transactions", m.Handler.GetTransactions)
 	}
 }

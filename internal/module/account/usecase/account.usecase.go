@@ -10,97 +10,102 @@ import (
 	"wallet_api/internal/module/account/repository"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
 type UseCase interface {
-	CreateAccount(ctx context.Context, userID uuid.UUID, accountName, currency string) (*entity.Account, error)
-	GetAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error)
-	GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error)
-	Deposit(ctx context.Context, accountID uuid.UUID, amount int64, description string) error
-	Withdraw(ctx context.Context, accountID uuid.UUID, amount int64, description string) error
-	Transfer(ctx context.Context, fromAccountID, toAccountID uuid.UUID, amount int64, description string) error
-	GetTransactions(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
+	CreateWallet(ctx context.Context, userID uuid.UUID, walletName, currency string) (*entity.Wallet, error)
+	GetWallet(ctx context.Context, walletID uuid.UUID) (*entity.Wallet, error)
+	GetUserWallets(ctx context.Context, userID uuid.UUID) ([]*entity.Wallet, error)
+	Deposit(ctx context.Context, walletID uuid.UUID, amount decimal.Decimal, description string) error
+	Withdraw(ctx context.Context, walletID uuid.UUID, amount decimal.Decimal, description string) error
+	Transfer(ctx context.Context, fromWalletID, toWalletID uuid.UUID, amount decimal.Decimal, description string) error
+	GetTransactions(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]*entity.Transaction, error)
 }
 
 type useCase struct {
-	accountRepo     repository.AccountRepository
+	walletRepo      repository.WalletRepository
 	transactionRepo repository.TransactionRepository
 }
 
-func New(accountRepo repository.AccountRepository, transactionRepo repository.TransactionRepository) UseCase {
+func New(walletRepo repository.WalletRepository, transactionRepo repository.TransactionRepository) UseCase {
 	return &useCase{
-		accountRepo:     accountRepo,
+		walletRepo:      walletRepo,
 		transactionRepo: transactionRepo,
 	}
 }
 
-func (uc *useCase) CreateAccount(ctx context.Context, userID uuid.UUID, accountName, currency string) (*entity.Account, error) {
-	account := &entity.Account{
-		UserID:      userID,
-		AccountName: accountName,
-		Balance:     0,
-		Currency:    currency,
-		Status:      consts.AccountStatusActive,
+func (uc *useCase) CreateWallet(ctx context.Context, userID uuid.UUID, walletName, currency string) (*entity.Wallet, error) {
+	wallet := &entity.Wallet{
+		UserID:     userID,
+		WalletName: walletName,
+		Balance:    decimal.Zero,
+		Currency:   currency,
+		Status:     consts.WalletStatusActive,
 	}
 
-	if err := uc.accountRepo.Create(ctx, account); err != nil {
-		return nil, fmt.Errorf("failed to create account: %w", err)
+	if err := uc.walletRepo.Create(ctx, wallet); err != nil {
+		return nil, fmt.Errorf("failed to create wallet: %w", err)
 	}
 
-	return account, nil
+	return wallet, nil
 }
 
-func (uc *useCase) GetAccount(ctx context.Context, accountID uuid.UUID) (*entity.Account, error) {
-	account, err := uc.accountRepo.FindByID(ctx, accountID)
+func (uc *useCase) GetWallet(ctx context.Context, walletID uuid.UUID) (*entity.Wallet, error) {
+	wallet, err := uc.walletRepo.FindByID(ctx, walletID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get account: %w", err)
+		return nil, fmt.Errorf("failed to get wallet: %w", err)
 	}
-	if account == nil {
+	if wallet == nil {
 		return nil, errors.ErrNotFound
 	}
 
-	return account, nil
+	return wallet, nil
 }
 
-func (uc *useCase) GetUserAccounts(ctx context.Context, userID uuid.UUID) ([]*entity.Account, error) {
-	accounts, err := uc.accountRepo.FindByUserID(ctx, userID)
+func (uc *useCase) GetUserWallets(ctx context.Context, userID uuid.UUID) ([]*entity.Wallet, error) {
+	wallets, err := uc.walletRepo.FindByUserID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user accounts: %w", err)
+		return nil, fmt.Errorf("failed to get user wallets: %w", err)
 	}
 
-	return accounts, nil
+	return wallets, nil
 }
 
-func (uc *useCase) Deposit(ctx context.Context, accountID uuid.UUID, amount int64, description string) error {
-	if amount <= 0 {
+func (uc *useCase) Deposit(ctx context.Context, walletID uuid.UUID, amount decimal.Decimal, description string) error {
+	if amount.LessThanOrEqual(decimal.Zero) {
 		return errors.ErrBadRequest
 	}
 
-	return uc.accountRepo.WithTransaction(ctx, func(tx *gorm.DB) error {
-		// Get account with pessimistic locking
-		account, err := uc.accountRepo.FindByIDForUpdate(ctx, accountID)
+	return uc.walletRepo.WithTransaction(ctx, func(tx *gorm.DB) error {
+		// Get wallet with pessimistic locking
+		wallet, err := uc.walletRepo.FindByIDForUpdate(ctx, walletID)
 		if err != nil {
-			return fmt.Errorf("failed to get account: %w", err)
+			return fmt.Errorf("failed to get wallet: %w", err)
 		}
-		if account == nil {
+		if wallet == nil {
 			return errors.ErrNotFound
 		}
 
+		// Calculate balance before and after
+		balanceBefore := wallet.Balance
+		balanceAfter := wallet.Balance.Add(amount)
+
 		// Update balance
-		account.Balance += amount
-		if err := uc.accountRepo.Update(ctx, account); err != nil {
-			return fmt.Errorf("failed to update account: %w", err)
+		wallet.Balance = balanceAfter
+		if err := uc.walletRepo.Update(ctx, wallet); err != nil {
+			return fmt.Errorf("failed to update wallet: %w", err)
 		}
 
 		// Create transaction
 		transaction := &entity.Transaction{
-			AccountID:     accountID,
+			WalletID:      walletID,
 			ReferenceID:   uuid.New().String(),
 			Type:          consts.TransactionTypeDeposit,
 			Amount:        amount,
-			BalanceBefore: account.Balance - amount,
-			BalanceAfter:  account.Balance,
+			BalanceBefore: balanceBefore,
+			BalanceAfter:  balanceAfter,
 			Description:   description,
 		}
 
@@ -112,40 +117,44 @@ func (uc *useCase) Deposit(ctx context.Context, accountID uuid.UUID, amount int6
 	})
 }
 
-func (uc *useCase) Withdraw(ctx context.Context, accountID uuid.UUID, amount int64, description string) error {
-	if amount <= 0 {
+func (uc *useCase) Withdraw(ctx context.Context, walletID uuid.UUID, amount decimal.Decimal, description string) error {
+	if amount.LessThanOrEqual(decimal.Zero) {
 		return errors.ErrBadRequest
 	}
 
-	return uc.accountRepo.WithTransaction(ctx, func(tx *gorm.DB) error {
-		// Get account with pessimistic locking
-		account, err := uc.accountRepo.FindByIDForUpdate(ctx, accountID)
+	return uc.walletRepo.WithTransaction(ctx, func(tx *gorm.DB) error {
+		// Get wallet with pessimistic locking
+		wallet, err := uc.walletRepo.FindByIDForUpdate(ctx, walletID)
 		if err != nil {
-			return fmt.Errorf("failed to get account: %w", err)
+			return fmt.Errorf("failed to get wallet: %w", err)
 		}
-		if account == nil {
+		if wallet == nil {
 			return errors.ErrNotFound
 		}
 
 		// Check balance
-		if account.Balance < amount {
+		if wallet.Balance.LessThan(amount) {
 			return errors.New(400, "Insufficient balance", nil)
 		}
 
+		// Calculate balance before and after
+		balanceBefore := wallet.Balance
+		balanceAfter := wallet.Balance.Sub(amount)
+
 		// Update balance
-		account.Balance -= amount
-		if err := uc.accountRepo.Update(ctx, account); err != nil {
-			return fmt.Errorf("failed to update account: %w", err)
+		wallet.Balance = balanceAfter
+		if err := uc.walletRepo.Update(ctx, wallet); err != nil {
+			return fmt.Errorf("failed to update wallet: %w", err)
 		}
 
 		// Create transaction
 		transaction := &entity.Transaction{
-			AccountID:     accountID,
+			WalletID:      walletID,
 			ReferenceID:   uuid.New().String(),
 			Type:          consts.TransactionTypeWithdrawal,
 			Amount:        amount,
-			BalanceBefore: account.Balance + amount,
-			BalanceAfter:  account.Balance,
+			BalanceBefore: balanceBefore,
+			BalanceAfter:  balanceAfter,
 			Description:   description,
 		}
 
@@ -157,68 +166,76 @@ func (uc *useCase) Withdraw(ctx context.Context, accountID uuid.UUID, amount int
 	})
 }
 
-func (uc *useCase) Transfer(ctx context.Context, fromAccountID, toAccountID uuid.UUID, amount int64, description string) error {
-	if amount <= 0 {
+func (uc *useCase) Transfer(ctx context.Context, fromWalletID, toWalletID uuid.UUID, amount decimal.Decimal, description string) error {
+	if amount.LessThanOrEqual(decimal.Zero) {
 		return errors.ErrBadRequest
 	}
 
-	if fromAccountID == toAccountID {
-		return errors.New(400, "Cannot transfer to the same account", nil)
+	if fromWalletID == toWalletID {
+		return errors.New(400, "Cannot transfer to the same wallet", nil)
 	}
 
 	referenceID := uuid.New().String()
 
-	return uc.accountRepo.WithTransaction(ctx, func(tx *gorm.DB) error {
-		fromAccount, err := uc.accountRepo.FindByIDForUpdate(ctx, fromAccountID)
+	return uc.walletRepo.WithTransaction(ctx, func(tx *gorm.DB) error {
+		fromWallet, err := uc.walletRepo.FindByIDForUpdate(ctx, fromWalletID)
 		if err != nil {
-			return fmt.Errorf("failed to get from account: %w", err)
+			return fmt.Errorf("failed to get from wallet: %w", err)
 		}
-		if fromAccount == nil {
-			return errors.New(404, "Source account not found", nil)
+		if fromWallet == nil {
+			return errors.New(404, "Source wallet not found", nil)
 		}
 
-		toAccount, err := uc.accountRepo.FindByIDForUpdate(ctx, toAccountID)
+		toWallet, err := uc.walletRepo.FindByIDForUpdate(ctx, toWalletID)
 		if err != nil {
-			return fmt.Errorf("failed to get to account: %w", err)
+			return fmt.Errorf("failed to get to wallet: %w", err)
 		}
-		if toAccount == nil {
-			return errors.New(404, "Destination account not found", nil)
-		}
-
-		if fromAccount.Status != consts.AccountStatusActive {
-			return errors.New(400, "Source account is not active", nil)
+		if toWallet == nil {
+			return errors.New(404, "Destination wallet not found", nil)
 		}
 
-		if toAccount.Status != consts.AccountStatusActive {
-			return errors.New(400, "Destination account is not active", nil)
+		if fromWallet.Status != consts.WalletStatusActive {
+			return errors.New(400, "Source wallet is not active", nil)
 		}
 
-		if fromAccount.Currency != toAccount.Currency {
+		if toWallet.Status != consts.WalletStatusActive {
+			return errors.New(400, "Destination wallet is not active", nil)
+		}
+
+		if fromWallet.Currency != toWallet.Currency {
 			return errors.New(400, "Cannot transfer between different currencies", nil)
 		}
 
-		if fromAccount.Balance < amount {
+		if fromWallet.Balance.LessThan(amount) {
 			return errors.New(400, "Insufficient balance", nil)
 		}
 
-		fromAccount.Balance -= amount
-		if err := uc.accountRepo.Update(ctx, fromAccount); err != nil {
-			return fmt.Errorf("failed to update from account: %w", err)
+		// Calculate balances for from wallet
+		fromBalanceBefore := fromWallet.Balance
+		fromBalanceAfter := fromWallet.Balance.Sub(amount)
+		fromWallet.Balance = fromBalanceAfter
+
+		// Calculate balances for to wallet
+		toBalanceBefore := toWallet.Balance
+		toBalanceAfter := toWallet.Balance.Add(amount)
+		toWallet.Balance = toBalanceAfter
+
+		if err := uc.walletRepo.Update(ctx, fromWallet); err != nil {
+			return fmt.Errorf("failed to update from wallet: %w", err)
 		}
 
-		toAccount.Balance += amount
-		if err := uc.accountRepo.Update(ctx, toAccount); err != nil {
-			return fmt.Errorf("failed to update to account: %w", err)
+		if err := uc.walletRepo.Update(ctx, toWallet); err != nil {
+			return fmt.Errorf("failed to update to wallet: %w", err)
 		}
 
 		withdrawalTx := &entity.Transaction{
-			AccountID:     fromAccountID,
+			WalletID:      fromWalletID,
 			ReferenceID:   referenceID,
 			Type:          consts.TransactionTypeTransfer,
 			Amount:        amount,
-			BalanceBefore: fromAccount.Balance + amount,
-			BalanceAfter:  fromAccount.Balance,
-			Description:   fmt.Sprintf("Transfer to account %s", toAccountID),
+			BalanceBefore: fromBalanceBefore,
+			BalanceAfter:  fromBalanceAfter,
+			Description:   fmt.Sprintf("Transfer to wallet %s", toWalletID),
 		}
 		if description != "" {
 			withdrawalTx.Description = fmt.Sprintf("%s - %s", description, withdrawalTx.Description)
@@ -229,13 +246,13 @@ func (uc *useCase) Transfer(ctx context.Context, fromAccountID, toAccountID uuid
 		}
 
 		depositTx := &entity.Transaction{
-			AccountID:     toAccountID,
+			WalletID:      toWalletID,
 			ReferenceID:   referenceID,
 			Type:          consts.TransactionTypeTransfer,
 			Amount:        amount,
-			BalanceBefore: toAccount.Balance - amount,
-			BalanceAfter:  toAccount.Balance,
-			Description:   fmt.Sprintf("Transfer from account %s", fromAccountID),
+			BalanceBefore: toBalanceBefore,
+			BalanceAfter:  toBalanceAfter,
+			Description:   fmt.Sprintf("Transfer from wallet %s", fromWalletID),
 		}
 		if description != "" {
 			depositTx.Description = fmt.Sprintf("%s - %s", description, depositTx.Description)
@@ -249,8 +266,8 @@ func (uc *useCase) Transfer(ctx context.Context, fromAccountID, toAccountID uuid
 	})
 }
 
-func (uc *useCase) GetTransactions(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
-	transactions, err := uc.transactionRepo.FindByAccountID(ctx, accountID, limit, offset)
+func (uc *useCase) GetTransactions(ctx context.Context, walletID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
+	transactions, err := uc.transactionRepo.FindByWalletID(ctx, walletID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transactions: %w", err)
 	}

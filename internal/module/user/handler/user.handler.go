@@ -37,6 +37,7 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 
 	user := &entity.User{
 		Username:     req.Username,
+		Email:        req.Email,
 		PasswordHash: req.Password,
 	}
 
@@ -117,9 +118,16 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 	}
 
 	user.Username = req.Username
+	user.Email = req.Email
 
 	if err := h.uc.UpdateProfile(c.Context(), user); err != nil {
 		h.log.Error("failed to update profile: %v", err)
+
+		// Check if it's a conflict error (username/email already taken)
+		if appErr, ok := err.(*errors.AppError); ok {
+			return c.Status(appErr.Code).JSON(response.Error(appErr.Code, appErr.Message))
+		}
+
 		return c.Status(500).JSON(response.Error(500, "Failed to update profile"))
 	}
 

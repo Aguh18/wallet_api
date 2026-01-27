@@ -27,6 +27,7 @@ Setelah import:
 ```json
 {
   "username": "testuser",
+  "email": "testuser@example.com",
   "password": "password123"
 }
 ```
@@ -56,43 +57,43 @@ Setelah Login berhasil, extract token dari response dan set ke variables:
 
 ✅ Sekarang semua authenticated request akan pakai cookies ini!
 
-### Langkah 2: Buat Akun Wallet
+### Langkah 2: Buat Wallet
 
 **4. Create Account** → Buat wallet pertama
 ```json
 {
-  "account_name": "Dompet Utama",
+  "wallet_name": "Dompet Utama",
   "currency": "IDR"
 }
 ```
 
-**5. Copy ID** dari response dan simpan ke variable `account_id`
+**5. Copy ID** dari response dan simpan ke variable `wallet_id`
 
 ### Langkah 3: Isi Saldo
 
-**6. Deposit** → Tambah saldo ke wallet
+**6. Deposit** → Tambah saldo ke wallet (amount sebagai string dengan presisi desimal)
 ```json
 {
-  "amount": 100000,
+  "amount": "100000.50",
   "description": "Deposit awal"
 }
 ```
 
 ### Langkah 4: Transaksi
 
-**7. Withdraw** → Tarik dana
+**7. Withdraw** → Tarik dana (amount sebagai string dengan presisi desimal)
 ```json
 {
-  "amount": 50000,
+  "amount": "50000.25",
   "description": "Tarik tunai"
 }
 ```
 
-**8. Transfer** → Kirim ke akun lain
+**8. Transfer** → Kirim ke wallet lain
 ```json
 {
-  "to_account_id": "uuid-akun-tujuan",
-  "amount": 25000,
+  "to_wallet_id": "uuid-wallet-tujuan",
+  "amount": "25000.75",
   "description": "Transfer"
 }
 ```
@@ -117,9 +118,9 @@ refresh_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 - Pilih **Local** (atau environment aktif)
 - Edit dan paste token values
 
-### Account Variables
+### Wallet Variables
 
-Untuk request yang butuh `account_id`:
+Untuk request yang butuh `wallet_id`:
 
 1. Jalankan **Create Account**
 2. Copy `id` dari response body
@@ -128,7 +129,7 @@ Untuk request yang butuh `account_id`:
 ## 📚 API Endpoints
 
 ### Authentication (Tanpa Login)
-- `POST /v1/auth/register` - Daftar user baru
+- `POST /v1/auth/register` - Daftar user baru (dengan email)
 - `POST /v1/auth/login` - Login dan dapatkan cookies
 - `POST /v1/auth/refresh` - Refresh token
 
@@ -136,17 +137,17 @@ Untuk request yang butuh `account_id`:
 - `POST /v1/auth/logout` - Logout
 
 ### User Profile (Butuh Login)
-- `GET /v1/users/profile` - Lihat profil user
-- `PUT /v1/users/profile` - Update profil user
+- `GET /v1/users/profile` - Lihat profil user (dengan email)
+- `PUT /v1/users/profile` - Update profil user (username & email)
 
-### Account Management (Butuh Login)
-- `POST /v1/accounts` - Buat akun wallet baru
-- `GET /v1/accounts` - Lihat semua akun user
-- `GET /v1/accounts/:id` - Lihat detail akun
-- `POST /v1/accounts/:id/deposit` - Deposit saldo
-- `POST /v1/accounts/:id/withdraw` - Tarik saldo
-- `POST /v1/accounts/:id/transfer` - Transfer ke akun lain
-- `GET /v1/accounts/:id/transactions` - Lihat riwayat transaksi
+### Wallet Management (Butuh Login)
+- `POST /v1/wallets` - Buat wallet baru
+- `GET /v1/wallets` - Lihat semua wallet user
+- `GET /v1/wallets/:id` - Lihat detail wallet
+- `POST /v1/wallets/:id/deposit` - Deposit saldo (amount sebagai string)
+- `POST /v1/wallets/:id/withdraw` - Tarik saldo (amount sebagai string)
+- `POST /v1/wallets/:id/transfer` - Transfer ke wallet lain (amount sebagai string)
+- `GET /v1/wallets/:id/transactions` - Lihat riwayat transaksi
 
 ## 💡 Tips
 
@@ -154,6 +155,7 @@ Untuk request yang butuh `account_id`:
 - **Set Cookies Selalu**: Setiap kali restart Bruno atau ganti user, jalankan Login dan set cookies manual
 - **Simpan ID**: Selalu copy ID dari response untuk dipakai di request lain
 - **Cek Cookies**: Setelah set cookies, jalankan **Get Profile** untuk verifikasi
+- **Amount Format**: Selalu gunakan string untuk amount dengan presisi desimal (contoh: "100.50", "1000.00")
 
 ## ❓ Troubleshooting
 
@@ -165,12 +167,18 @@ Untuk request yang butuh `account_id`:
 3. Set manual di Environment Variables (access_token & refresh_token)
 4. Coba lagi request yang tadi gagal
 
-### "Account not found"?
+### "Wallet not found"?
 
 **Solusi:**
-1. Pastikan sudah Create Account
+1. Pastikan sudah Create Account (wallet)
 2. Copy `id` dari response body
-3. Set variable `account_id` dengan ID tersebut
+3. Set variable `wallet_id` dengan ID tersebut
+
+### "Invalid amount format"?
+
+**Solusi:**
+1. Pastikan amount dikirim sebagai string (bukan number/integer)
+2. Gunakan format desimal yang valid: "100.50", "1000.00", "50"
 
 ---
 

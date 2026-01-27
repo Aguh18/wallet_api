@@ -88,10 +88,30 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"Response contains tokens\", function () {",
-                  "    pm.expect(pm.response.headers.get('Set-Cookie')).to.include('access_token');",
-                  "    pm.expect(pm.response.headers.get('Set-Cookie')).to.include('refresh_token');",
-                  "});"
+                  "// Extract cookies from Set-Cookie header",
+                  "var setCookie = pm.response.headers.get('Set-Cookie');",
+                  "if (setCookie) {",
+                  "  // Parse access_token",
+                  "  var accessTokenMatch = setCookie.match(/access_token=([^;]+)/);",
+                  "  if (accessTokenMatch && accessTokenMatch[1]) {",
+                  "    pm.collectionVariables.set('access_token', accessTokenMatch[1]);",
+                  "    console.log('Access token set:', accessTokenMatch[1].substring(0, 20) + '...');",
+                  "  }",
+                  "  ",
+                  "  // Parse refresh_token",
+                  "  var refreshTokenMatch = setCookie.match(/refresh_token=([^;]+)/);",
+                  "  if (refreshTokenMatch && refreshTokenMatch[1]) {",
+                  "    pm.collectionVariables.set('refresh_token', refreshTokenMatch[1]);",
+                  "    console.log('Refresh token set:', refreshTokenMatch[1].substring(0, 20) + '...');",
+                  "  }",
+                  "  ",
+                  "  pm.test(\"Tokens extracted and saved to collection variables\", function () {",
+                  "    pm.expect(pm.collectionVariables.get('access_token')).to.exist.and.not.empty();",
+                  "    pm.expect(pm.collectionVariables.get('refresh_token')).to.exist.and.not.empty();",
+                  "  });",
+                  "} else {",
+                  "  console.log('No Set-Cookie header found');",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -114,7 +134,7 @@
               "host": ["{{base_url}}"],
               "path": ["v1", "auth", "login"]
             },
-            "description": "Login and get auth cookies"
+            "description": "Login and auto-set auth cookies to collection variables"
           },
           "response": []
         },

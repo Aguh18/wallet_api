@@ -49,46 +49,9 @@ Layanan REST API wallet sederhana yang dibangun dengan Go dan prinsip Clean Arch
   - Bruno API collection untuk testing
   - Postman API collection untuk testing
 
-## 📝 Recent Updates & Breaking Changes
+## API Format (v1.1.0)
 
-### v1.1.0 - Wallet & Monetary Precision Update (Latest)
-
-**🎉 Major Improvements:**
-- ✨ **Email Support**: User registration sekarang membutuhkan field `email` (unik per user)
-- ✨ **Monetary Precision**: Menggunakan `NUMERIC(20,2)` di database + `shopspring/decimal` di Go untuk presisi exact
-- ✨ **Wallet Naming**: Konsisten menggunakan istilah "Wallet" daripada "Account"
-- ✨ **API Endpoint**: Endpoint berubah dari `/v1/accounts` → `/v1/wallets`
-
-**Breaking Changes:**
-
-| Change | Old | New |
-|--------|-----|-----|
-| **Endpoint** | `/v1/accounts/*` | `/v1/wallets/*` |
-| **Register Request** | `username`, `password` | `username`, `email`, `password` |
-| **Update Profile Request** | `username` | `username`, `email` |
-| **Create Wallet Request** | `account_name` | `wallet_name` |
-| **Amount Type** | `integer` | `string` (dengan presisi desimal) |
-| **Balance Response** | `integer` | `string` (format desimal) |
-| **Transfer Request** | `to_account_id` | `to_wallet_id` |
-
-**API Request Examples:**
-
-**Old Format (v1.0.0):**
-```json
-// Register
-{
-  "username": "testuser",
-  "password": "password123"
-}
-
-// Deposit
-{
-  "amount": 100000,
-  "description": "Deposit"
-}
-```
-
-**New Format (v1.1.0):**
+### Request Format
 ```json
 // Register
 {
@@ -97,82 +60,32 @@ Layanan REST API wallet sederhana yang dibangun dengan Go dan prinsip Clean Arch
   "password": "password123"
 }
 
-// Deposit
+// Create Wallet
+{
+  "wallet_name": "Dompet Utama",
+  "currency": "IDR"
+}
+
+// Transaction (Deposit/Withdraw/Transfer)
 {
   "amount": "100000.50",
   "description": "Deposit"
 }
 ```
 
-**API Response Examples:**
-
-**Old Format (v1.0.0):**
+### Response Format
 ```json
 {
-  "balance": 100000
+  "balance": "100000.50",
+  "amount": "50000.25"
 }
 ```
 
-**New Format (v1.1.0):**
-```json
-{
-  "balance": "100000.50"
-}
-```
-
-**Database Changes:**
-- `accounts` table → `wallets` table
-- `account_name` column → `wallet_name` column
-- `transactions.account_id` → `transactions.wallet_id`
-- `balance`, `amount`, `balance_before`, `balance_after` → `NUMERIC(20,2)` (dari `BIGINT`)
-
-**Migration Guide:**
-
-Untuk yang sudah menggunakan API v1.0.0:
-
-1. **Update Request Body**:
-   - Tambahkan `email` saat register
-   - Ubah `amount` dari number ke string
-   - Ubah `account_name` → `wallet_name`
-   - Ubah `to_account_id` → `to_wallet_id`
-
-2. **Update Endpoint URLs**:
-   - Ganti semua `/v1/accounts/` → `/v1/wallets/`
-
-3. **Update Response Parsing**:
-   - `balance`, `amount` sekarang string, bukan number
-   - Parse sebagai string untuk presisi desimal
-
-**Why These Changes?**
-
-- **Email**: Memenuhi standar modern auth dengan email sebagai identifier unik
-- **NUMERIC + Decimal**:
-  - ❌ `BIGINT`/`float64` memiliki precision loss untuk nilai uang
-  - ✅ `NUMERIC(20,2)` + `shopspring/decimal` memberikan presisi exact
-  - Menghindari floating-point errors dalam perhitungan keuangan
-  - Best practice untuk financial applications
-- **Wallet vs Account**: Lebih jelas dan sesuai konteks aplikasi
-- **String Amount**: Client mengirim sebagai string → server parse sebagai decimal → kembali sebagai string. Presisi terjaga!
-
-**Technical Details:**
-
-```go
-// Old: int64 (loss of precision)
-amount := 100000  // 1000.00 will be 1000
-
-// New: decimal.Decimal (exact precision)
-amount := decimal.NewFromString("100000.50")  // Exactly 100000.50
-balance := balance.Add(amount)  // No precision loss!
-```
-
-**Rollback Migration:**
-```bash
-# Jika perlu rollback
-make migrate-down
-```
-
-**New Dependencies:**
-- `github.com/shopspring/decimal` v1.4.0 - Decimal arithmetic for monetary values
+**Important:**
+- Email field wajib diisi saat register
+- Amount menggunakan **string** dengan format desimal untuk presisi exact
+- Endpoint: `/v1/wallets/*` (bukan `/v1/accounts/`)
+- Field: `wallet_name`, `to_wallet_id` (bukan `account_name`, `to_account_id`)
 
 ---
 

@@ -44,7 +44,6 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 	if err := h.uc.Register(c.Context(), user); err != nil {
 		h.log.Error("failed to register user: %v", err)
 
-		// Check if it's a conflict error (user already exists)
 		if appErr, ok := err.(*errors.AppError); ok {
 			return c.Status(appErr.Code).JSON(response.Error(appErr.Code, appErr.Message))
 		}
@@ -52,14 +51,12 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 		return c.Status(500).JSON(response.Error(500, "Failed to register user"))
 	}
 
-	// Generate JWT tokens
 	tokenPair, err := h.jwtManager.GenerateToken(user.ID, user.Username)
 	if err != nil {
 		h.log.Error("failed to generate tokens: %v", err)
 		return c.Status(500).JSON(response.Error(500, "Failed to generate tokens"))
 	}
 
-	// Set auth cookies (use development mode for HTTP testing)
 	isProduction := c.Protocol() == "https"
 	utils.SetAuthCookiesSmart(c, tokenPair.AccessToken, tokenPair.RefreshToken, time.Duration(tokenPair.ExpiresIn)*time.Second, isProduction)
 
